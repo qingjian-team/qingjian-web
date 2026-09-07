@@ -1,0 +1,163 @@
+/* 文档正文（Markdown 渲染结果）的排版，沿用站点的字体与颜色 token。由 docs/[...path]/+page.svelte 引入。 */
+
+/* Markdown 正文的排版，沿用站点的字体与颜色 token */
+.doc h2 {
+	margin: 26px 0 10px;
+	font-family: var(--font-song);
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 1.4;
+	scroll-margin-top: 100px;
+}
+.doc h2:first-child {
+	margin-top: 0;
+}
+.doc h3 {
+	margin: 20px 0 8px;
+	font-size: 16px;
+	font-weight: 600;
+	scroll-margin-top: 100px;
+}
+.doc p,
+.doc li {
+	font-size: 14px;
+	line-height: 1.8;
+	color: var(--color-muted);
+}
+.doc p {
+	margin: 0 0 12px;
+}
+.doc ul,
+.doc ol {
+	margin: 0 0 14px;
+	padding-left: 22px;
+}
+.doc ul {
+	list-style: disc;
+}
+.doc ol {
+	list-style: decimal;
+}
+.doc li {
+	margin: 4px 0;
+}
+.doc strong {
+	font-weight: 500;
+	color: var(--color-ink);
+}
+.doc a {
+	color: var(--color-teal);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.doc code {
+	padding: 1px 6px;
+	border-radius: 4px;
+	background: #eef3f1;
+	font-size: 0.92em;
+	color: var(--color-ink);
+}
+/* 按键：键帽样式，符号 + 名字。符号用系统字体里的 ⌘ ⌥ ⇧ ⌫ ↩ 一族，与 macOS 菜单里的一致 */
+.doc kbd {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	min-width: 22px;
+	margin: 0 1px;
+	padding: 1px 7px 2px;
+	border: 1px solid #cfdad6;
+	border-bottom-width: 2px;
+	border-radius: 6px;
+	background: #fbfdfc;
+	font-family: var(--font-sans);
+	font-size: 12px;
+	line-height: 1.5;
+	color: var(--color-ink);
+	vertical-align: -1px;
+	white-space: nowrap;
+}
+.doc kbd .glyph {
+	font-size: 13px;
+	line-height: 1;
+}
+.doc .keys {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	white-space: nowrap;
+}
+.doc .keys .plus {
+	font-size: 11px;
+	color: #9aa5b1;
+}
+.doc pre {
+	margin: 0 0 14px;
+	padding: 12px 14px;
+	border-radius: 8px;
+	background: #f0f5f3;
+	overflow-x: auto;
+	font-size: 13px;
+	line-height: 1.6;
+}
+.doc pre code {
+	padding: 0;
+	background: none;
+	color: var(--color-ink);
+}
+.doc .table-wrap {
+	margin: 0 0 14px;
+	border: 1px solid var(--color-line);
+	border-radius: 8px;
+	overflow-x: auto;
+}
+.doc table {
+	width: 100%;
+	min-width: 420px;
+	border-collapse: collapse;
+	font-size: 13px;
+	text-align: left;
+}
+.doc th {
+	padding: 8px 12px;
+	background: #f0f7f2;
+	font-size: 12px;
+	font-weight: 500;
+	color: #4d6b62;
+}
+.doc td {
+	padding: 8px 12px;
+	border-top: 1px solid var(--color-line);
+	line-height: 1.6;
+	color: var(--color-muted);
+	vertical-align: top;
+}
+.doc td:first-child {
+	white-space: nowrap;
+	color: var(--color-ink);
+}
+.doc img {
+	display: block;
+	max-width: 100%;
+	margin: 6px 0 14px;
+	border-radius: 8px;
+	border: 1px solid var(--color-line);
+}
+.doc blockquote {
+	margin: 0 0 14px;
+	padding: 2px 14px;
+	border-left: 3px solid #abd7d0;
+	color: var(--color-muted);
+}
+.doc hr {
+	margin: 20px 0;
+	border: 0;
+	border-top: 1px solid var(--color-line);
+}
+/* 分组页的子页卡片不吃正文的列表样式 */
+.doc .not-doc {
+	padding: 0;
+	list-style: none;
+}
+.doc .not-doc li {
+	margin: 0;
+}

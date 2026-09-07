@@ -1,0 +1,112 @@
+@import 'tailwindcss';
+
+/* 设计 token：颜色、字体、动画全部挂在 @theme 上，供 utility 直接引用 */
+@theme {
+	--font-sans:
+		Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+	/* 中文衬线（标题、品牌字） */
+	--font-song: 'Songti SC', 'STSong', 'Noto Serif CJK SC', serif;
+	/* 楷体（手写体点缀） */
+	--font-kai: 'STKaiti', 'Kaiti SC', serif;
+	--font-georgia: Georgia, serif;
+
+	--color-teal: #008576;
+	--color-teal-dark: #006e62;
+	--color-muted: #788395;
+	--color-line: #e4efef;
+	--color-ink: #112238;
+
+	/* 断点按原设计的 760/980/1280 三档来，样式写成移动优先 */
+	--breakpoint-desk: 761px;
+	--breakpoint-wide: 981px;
+	--breakpoint-max: 1281px;
+
+	--animate-bamboo: bamboo-breathe 13s ease-in-out infinite alternate;
+	--animate-caret: caret-blink 1s steps(1) infinite;
+}
+
+/* 竹影随风摆动 */
+@keyframes bamboo-breathe {
+	0% {
+		transform: rotate(-1.3deg) translateX(-3px);
+	}
+	50% {
+		transform: rotate(0.2deg) translateX(2px);
+	}
+	100% {
+		transform: rotate(1.5deg) translateX(5px);
+	}
+}
+
+/* 编辑区光标闪烁 */
+@keyframes caret-blink {
+	50% {
+		opacity: 0;
+	}
+}
+
+@layer base {
+	html {
+		scroll-behavior: smooth;
+		/* 悬浮导航栏高度 + 余量 */
+		scroll-padding-top: 100px;
+	}
+
+	body {
+		min-width: 360px;
+		background: #f7faf7;
+		color: var(--color-ink);
+		font-synthesis: none;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	button,
+	a {
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	/* Tailwind 4 的预设把按钮光标设成箭头，可点的东西还是要给手型 */
+	button:not(:disabled),
+	[role='button']:not([aria-disabled='true']) {
+		cursor: pointer;
+	}
+
+	button:focus-visible,
+	a:focus-visible,
+	input:focus-visible {
+		outline: 3px solid #61bfb4;
+		outline-offset: 4px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		html {
+			scroll-behavior: auto;
+		}
+	}
+}
+
+/* 当前页标记：一段中间断开的青色线，取「竹节」的形。横向用在导航条下方，纵向用在列表左侧。 */
+@utility bamboo-joint-x {
+	background-image: linear-gradient(
+		to right,
+		var(--color-teal) 0 42%,
+		transparent 42% 58%,
+		var(--color-teal) 58% 100%
+	);
+}
+
+@utility bamboo-joint-y {
+	background-image: linear-gradient(
+		to bottom,
+		var(--color-teal) 0 42%,
+		transparent 42% 58%,
+		var(--color-teal) 58% 100%
+	);
+}
+
+@layer components {
+	/* 主内容栅格：窄屏留百分比边距，宽屏定宽居中 */
+	.wrap {
+		@apply mx-[6%] max-w-[1010px] max:max-w-[1152px] desk:mx-[5%] min-[1061px]:mx-auto;
+	}
+}

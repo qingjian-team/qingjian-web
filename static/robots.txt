@@ -1,0 +1,5 @@
+# allow crawling everything by default
+User-agent: *
+Disallow:
+
+Sitemap: https://qingjian.app/sitemap.xml

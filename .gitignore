@@ -1,0 +1,31 @@
+node_modules
+
+# Output
+# 主仓库 docs/user 的同步产物（scripts/sync-docs.mjs）
+/src/content/docs
+/static/docs-assets
+# 主仓库 Release 上的 releases.json（scripts/sync-releases.mjs）
+/src/content/releases.json
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Playwright MCP
+.playwright-mcp
