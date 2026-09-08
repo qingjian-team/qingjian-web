@@ -8,14 +8,24 @@
 //
 // 从 git 拉是稀疏浅克隆，只取 docs/user：
 //   QINGJIAN_DOCS_REPO   仓库地址，缺省 https://github.com/qingjian-team/qingjian.git
-//   QINGJIAN_DOCS_REF    分支或标签，缺省 main
+//   QINGJIAN_DOCS_REF    分支、标签或提交号；缺省是 src/content/upstream.json 里记的主仓库提交（主仓库 workflow 发版 /
+//                        改文档时写进来的），没有就 main
 //   QINGJIAN_DOCS_TOKEN  只读令牌，仅在主仓库私有时需要（现在公开，留空即可）
 //
 // 产物（都在 .gitignore 里）：
 //   src/content/docs/     所有 .md，目录结构原样
 //   static/docs-assets/   .md 以外的文件（图片等），页面里相对路径的图片会改写到 /docs-assets/<同样的相对路径>
 
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
+import {
+	cpSync,
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	statSync
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -45,10 +55,22 @@ function pickSource() {
 	return { kind: 'git' };
 }
 
+/** 主仓库 workflow 写进来的「文档对应哪个提交」（src/content/upstream.json 的 docs），没有或不像提交号就返回 undefined */
+function upstreamDocsRef() {
+	const file = join(root, 'src/content/upstream.json');
+	if (!existsSync(file)) return undefined;
+	try {
+		const docs = JSON.parse(readFileSync(file, 'utf8')).docs;
+		return typeof docs === 'string' && /^[0-9a-f]{40}$/.test(docs) ? docs : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
 /** 稀疏浅克隆主仓库，只取 docs/user，返回那个目录的路径（临时目录，用完删） */
 function cloneDocs() {
 	const repo = process.env.QINGJIAN_DOCS_REPO ?? 'https://github.com/qingjian-team/qingjian.git';
-	const ref = process.env.QINGJIAN_DOCS_REF ?? 'main';
+	const ref = process.env.QINGJIAN_DOCS_REF ?? upstreamDocsRef() ?? 'main';
 	const token = process.env.QINGJIAN_DOCS_TOKEN;
 	// 令牌塞进 URL 只在这个子进程里出现，日志里只打印去掉令牌的地址
 	const url =
@@ -59,19 +81,30 @@ function cloneDocs() {
 	log(`从 git 拉取 ${repo}@${ref} 的 ${DOCS_SUBDIR}`);
 	const git = (args, cwd = tmp) =>
 		execFileSync('git', args, { cwd, stdio: ['ignore', 'ignore', 'inherit'] });
-	git([
-		'clone',
-		'--quiet',
-		'--depth',
-		'1',
-		'--filter=blob:none',
-		'--sparse',
-		'--branch',
-		ref,
-		url,
-		'repo'
-	]);
-	git(['sparse-checkout', 'set', '--no-cone', DOCS_SUBDIR], join(tmp, 'repo'));
+	const repoDir = join(tmp, 'repo');
+	if (/^[0-9a-f]{40}$/.test(ref)) {
+		// 提交号不能当 --branch 用：空仓库里按号浅取（GitHub 允许取可达的任意提交）
+		mkdirSync(repoDir);
+		git(['init', '--quiet'], repoDir);
+		git(['remote', 'add', 'origin', url], repoDir);
+		git(['sparse-checkout', 'set', '--no-cone', DOCS_SUBDIR], repoDir);
+		git(['fetch', '--quiet', '--depth', '1', '--filter=blob:none', 'origin', ref], repoDir);
+		git(['checkout', '--quiet', 'FETCH_HEAD'], repoDir);
+	} else {
+		git([
+			'clone',
+			'--quiet',
+			'--depth',
+			'1',
+			'--filter=blob:none',
+			'--sparse',
+			'--branch',
+			ref,
+			url,
+			'repo'
+		]);
+		git(['sparse-checkout', 'set', '--no-cone', DOCS_SUBDIR], repoDir);
+	}
 	const path = join(tmp, 'repo', DOCS_SUBDIR);
 	if (!existsSync(path)) throw new Error(`仓库里没有 ${DOCS_SUBDIR}`);
 	return { path, cleanup: () => rmSync(tmp, { recursive: true, force: true }) };
