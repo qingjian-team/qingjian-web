@@ -10,3 +10,6 @@ bun.lockb
 
 # Generated
 worker-configuration.d.ts
+
+# sync-docs 拉主仓库时生成
+src/content/upstream.json

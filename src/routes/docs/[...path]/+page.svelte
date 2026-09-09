@@ -12,16 +12,9 @@
 	/** 文档内的站内地址；首页是 /docs 本身 */
 	const href = (slug: string) => resolve('/docs/[...path]', { path: slug });
 
-	/**
-	 * 侧栏分组默认折叠，只展开当前页所在的分组；点箭头可以手动开合别的组。
-	 * 换页后手动开合的状态清掉，回到「只展开当前分组」。
-	 */
+	/** 侧栏分组默认全部展开；点箭头可以手动收起，换页时收起的状态保留 */
 	let manual = $state<Record<string, boolean>>({});
-	$effect(() => {
-		void data.slug;
-		manual = {};
-	});
-	const isOpen = (group: string) => manual[group] ?? group === data.group?.slug;
+	const isOpen = (group: string) => manual[group] ?? true;
 	const toggle = (group: string) => {
 		manual = { ...manual, [group]: !isOpen(group) };
 	};

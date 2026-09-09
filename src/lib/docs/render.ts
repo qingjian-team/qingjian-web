@@ -57,6 +57,19 @@ const NAMED_KEYS: Record<string, Key> = {
 	字母: { label: '字母' }
 };
 
+/** 符号写法的非修饰键，`⌥⌫`、`⌘→` 这类紧挨着写时用 */
+const GLYPH_KEYS: Record<string, Key> = {
+	'⌫': NAMED_KEYS['退格'],
+	'⌦': NAMED_KEYS['Delete'],
+	'↩': NAMED_KEYS['回车'],
+	'⇥': NAMED_KEYS['Tab'],
+	'⎋': NAMED_KEYS['Esc'],
+	'←': NAMED_KEYS['左'],
+	'→': NAMED_KEYS['右'],
+	'↑': NAMED_KEYS['上'],
+	'↓': NAMED_KEYS['下']
+};
+
 const MODIFIERS: Record<string, string> = {
 	'⌘': 'Command',
 	'⌥': 'Option',
@@ -75,11 +88,16 @@ export function parseKeys(text: string): Key[] | null {
 			keys.push(NAMED_KEYS[part]);
 			continue;
 		}
-		// 修饰键符号串，后面可跟一个键：⇧⌥、⌃⌥T、⇧⌘G
-		const combo = /^([⌘⌥⌃⇧⇪]+)([A-Za-z0-9])?$/.exec(part);
+		// 单独一个符号键：⌫、↩
+		if (GLYPH_KEYS[part]) {
+			keys.push(GLYPH_KEYS[part]);
+			continue;
+		}
+		// 修饰键符号串，后面可跟一个键：⇧⌥、⌃⌥T、⇧⌘G、⌥⌫、⌘→
+		const combo = /^([⌘⌥⌃⇧⇪]+)([A-Za-z0-9]|[⌫⌦↩⇥⎋←→↑↓])?$/.exec(part);
 		if (combo) {
 			for (const glyph of combo[1]) keys.push({ glyph, label: MODIFIERS[glyph] });
-			if (combo[2]) keys.push({ label: combo[2].toUpperCase() });
+			if (combo[2]) keys.push(GLYPH_KEYS[combo[2]] ?? { label: combo[2].toUpperCase() });
 			continue;
 		}
 		// 单个可见字符：数字、字母、`[` `]` `,` `.` `-` `'` `?` 这类
@@ -98,6 +116,31 @@ function renderKeys(keys: Key[]): string {
 		return `<kbd>${glyph}${escapeHtml(key.label)}</kbd>`;
 	});
 	return `<span class="keys">${caps.join('<span class="plus" aria-hidden="true">+</span>')}</span>`;
+}
+
+function renderCodespan(text: string): string {
+	const keys = parseKeys(text);
+	return keys ? renderKeys(keys) : `<code>${escapeHtml(text)}</code>`;
+}
+
+/**
+ * 一行行内 Markdown（更新日志的一条）渲染成 HTML：反引号按上面的规则画成键帽或代码；
+ * 没加反引号、直接写的按键符号（⌥⌫、⌘→、⇧⌘G）也画成键帽。
+ */
+export function renderInline(text: string): string {
+	const withKeys = text.replace(
+		/(`[^`]*`)|([⌘⌥⌃⇧⇪]+[A-Za-z0-9⌫⌦↩⇥⎋←→↑↓]?|[⌫⌦↩⇥⎋])/g,
+		(match, code: string | undefined) => code ?? `\`${match}\``
+	);
+	const marked = new Marked({
+		gfm: true,
+		renderer: {
+			codespan({ text }) {
+				return renderCodespan(text);
+			}
+		}
+	});
+	return marked.parseInline(withKeys, { async: false }) as string;
 }
 
 /**
@@ -151,8 +194,7 @@ export function renderMarkdown(
 				return `<h${depth} id="${id}">${this.parser.parseInline(tokens)}</h${depth}>\n`;
 			},
 			codespan({ text }) {
-				const keys = parseKeys(text);
-				return keys ? renderKeys(keys) : `<code>${escapeHtml(text)}</code>`;
+				return renderCodespan(text);
 			},
 			link({ href, title, tokens }) {
 				const target = rewriteLink(href, currentDir);

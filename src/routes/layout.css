@@ -50,6 +50,9 @@
 		scroll-behavior: smooth;
 		/* 悬浮导航栏高度 + 余量 */
 		scroll-padding-top: 100px;
+		/* 滚动条：细条、青灰滑块、透明轨道，两个属性都会继承，侧栏 / 代码块 / 表格的内部滚动区一并生效 */
+		scrollbar-width: thin;
+		scrollbar-color: #bfd3ce transparent;
 	}
 
 	body {
@@ -83,6 +86,40 @@
 			scroll-behavior: auto;
 		}
 	}
+}
+
+/* 按键：键帽样式，符号 + 名字。符号用系统字体里的 ⌘ ⌥ ⇧ ⌫ ↩ 一族，与 macOS 菜单里的一致 */
+kbd {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	min-width: 22px;
+	margin: 0 1px;
+	padding: 1px 7px 2px;
+	border: 1px solid #cfdad6;
+	border-bottom-width: 2px;
+	border-radius: 6px;
+	background: #fbfdfc;
+	font-family: var(--font-sans);
+	font-size: 12px;
+	line-height: 1.5;
+	color: var(--color-ink);
+	vertical-align: -1px;
+	white-space: nowrap;
+}
+kbd .glyph {
+	font-size: 13px;
+	line-height: 1;
+}
+.keys {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	white-space: nowrap;
+}
+.keys .plus {
+	font-size: 11px;
+	color: #9aa5b1;
 }
 
 /* 当前页标记：一段中间断开的青色线，取「竹节」的形。横向用在导航条下方，纵向用在列表左侧。 */

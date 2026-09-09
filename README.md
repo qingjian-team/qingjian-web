@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="static/brand/qingjian-logo-horizontal.png" alt="青简 Qingjian" width="420">
+  <img src="static/brand/qingjian-logo-horizontal-transparent.png" alt="青简 Qingjian" width="420">
 </p>
 
 <p align="center">
@@ -99,7 +99,7 @@ Linux    → IBus / Fcitx               计划中
 
 | 场景            | 来源                                                                                                      |
 | --------------- | --------------------------------------------------------------------------------------------------------- |
-| 本地开发        | 相邻目录 `../ime/docs/user`（主仓库）存在就直接读，改文档不用提交就能预览                                     |
+| 本地开发        | 相邻目录 `../ime/docs/user`（主仓库）存在就直接读，改文档不用提交就能预览                                 |
 | CI（`CI=true`） | 从 git 稀疏拉取主仓库的 `docs/user`（`QINGJIAN_DOCS_REPO` / `QINGJIAN_DOCS_REF`；主仓库公开，不需要令牌） |
 | 手动指定        | `QINGJIAN_DOCS_SOURCE=git` 强制走 git，或给一个本地目录路径                                               |
 

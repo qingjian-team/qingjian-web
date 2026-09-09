@@ -4,7 +4,7 @@
 	"version": "0.1.0",
 	"license": "GPL-3.0-or-later",
 	"type": "module",
-	"packageManager": "pnpm@11.25.0",
+	"packageManager": "pnpm@12.3.4",
 	"scripts": {
 		"dev": "node scripts/sync-docs.mjs && node scripts/sync-releases.mjs && vite dev",
 		"build": "node scripts/sync-docs.mjs && node scripts/sync-releases.mjs && wrangler types && vite build",

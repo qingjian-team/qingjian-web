@@ -55,11 +55,16 @@ const CHANNEL_LABELS: Record<Channel, string> = {
 	stable: '正式版'
 };
 
+/** CPU 架构，从安装包文件名里认（`-arm64.pkg` / `-x86_64.pkg`） */
+export type Arch = 'arm64' | 'x86_64';
+
 /** 一个可下载的安装包 */
 export type Asset = {
 	platform: PlatformId;
 	/** 芯片 / 架构说明，例如 Apple Silicon */
 	arch: string;
+	/** 架构标识，文件名里认不出时为 null */
+	cpu: Arch | null;
 	/** 文件名，也是按钮上的字 */
 	file: string;
 	url: string;
@@ -100,6 +105,7 @@ export const releases: Release[] = feed.releases.map((release) => ({
 					{
 						platform: asset.platform,
 						arch: asset.arch,
+						cpu: archOfFile(asset.file),
 						file: asset.file,
 						url: asset.url,
 						size: asset.size,
@@ -137,6 +143,12 @@ export function formatBuiltAt(iso: string): string {
 	return iso ? `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC` : '';
 }
 
+function archOfFile(file: string): Arch | null {
+	if (/[-_.]arm64\b/.test(file)) return 'arm64';
+	if (/[-_.]x86_64\b/.test(file)) return 'x86_64';
+	return null;
+}
+
 function isPlatformId(value: string): value is PlatformId {
 	return value === 'macos' || value === 'windows' || value === 'linux';
 }
@@ -155,5 +167,45 @@ export function detectPlatform(): PlatformId | null {
 	if (hint.includes('mac')) return 'macos';
 	if (hint.includes('win')) return 'windows';
 	if (hint.includes('linux') || hint.includes('x11')) return 'linux';
+	return null;
+}
+
+/**
+ * 猜访问者的 CPU 架构。UA 里没有这个信息（Safari 在 Apple Silicon 上报的也是 Intel），所以：
+ * - Chromium 系问 Client Hints 的 architecture；
+ * - 其他浏览器看 WebGL 报的显卡名，Apple M 系列 / Apple GPU 是 Apple Silicon，Intel / AMD 是 Intel 机器。
+ * 都拿不到返回 null，页面按 Apple Silicon 给（2020 年后的 Mac 都是），旁边留 Intel 版的链接。
+ */
+export async function detectArch(): Promise<Arch | null> {
+	if (typeof navigator === 'undefined') return null;
+	const hints = (
+		navigator as Navigator & {
+			userAgentData?: {
+				getHighEntropyValues?: (k: string[]) => Promise<{ architecture?: string }>;
+			};
+		}
+	).userAgentData;
+	if (hints?.getHighEntropyValues) {
+		try {
+			const { architecture } = await hints.getHighEntropyValues(['architecture']);
+			if (architecture === 'arm') return 'arm64';
+			if (architecture === 'x86') return 'x86_64';
+		} catch {
+			// 浏览器不给就走下面
+		}
+	}
+	try {
+		const gl = document.createElement('canvas').getContext('webgl');
+		if (!gl) return null;
+		const info = gl.getExtension('WEBGL_debug_renderer_info');
+		const renderer: unknown = info
+			? gl.getParameter(info.UNMASKED_RENDERER_WEBGL)
+			: gl.getParameter(gl.RENDERER);
+		if (typeof renderer !== 'string') return null;
+		if (/apple (m\d|gpu)/i.test(renderer)) return 'arm64';
+		if (/intel|amd|radeon|nvidia/i.test(renderer)) return 'x86_64';
+	} catch {
+		// WebGL 被禁用等情况
+	}
 	return null;
 }
