@@ -3,7 +3,7 @@
 // 来源按这个顺序决定：
 //   1. 环境变量 QINGJIAN_DOCS_SOURCE：`git` 强制从 git 拉；其他值当作本地目录路径。
 //   2. 在 CI 里（CI=true）默认从 git 拉。
-//   3. 本地开发：相邻目录 ../qingjian/docs/user 存在就直接拷它，改文档不用提交就能预览。
+//   3. 本地开发：相邻目录 ../ime/docs/user（主仓库）存在就直接拷它，改文档不用提交就能预览。
 //   4. 都没有就从 git 拉。
 //
 // 从 git 拉是稀疏浅克隆，只取 docs/user：
@@ -35,7 +35,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DOCS_SUBDIR = 'docs/user';
 const CONTENT_DIR = join(root, 'src/content/docs');
 const ASSETS_DIR = join(root, 'static/docs-assets');
-const LOCAL_SIBLING = resolve(root, '..', 'qingjian', DOCS_SUBDIR);
+const LOCAL_SIBLING = resolve(root, '..', 'ime', DOCS_SUBDIR);
 
 function log(message) {
 	console.log(`[sync-docs] ${message}`);
