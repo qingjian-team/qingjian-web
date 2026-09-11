@@ -1,4 +1,5 @@
 <script lang="ts">
+	import GithubLogoIcon from 'phosphor-svelte/lib/GithubLogoIcon';
 	import ListIcon from 'phosphor-svelte/lib/ListIcon';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
@@ -66,6 +67,19 @@
 					onclick={() => (menu = false)}
 				/>
 			{/each}
+			<!-- 源码仓库：桌面端只画图标、用竖线与站内导航隔开，手机菜单里带文字 -->
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- 外部链接 -->
+			<a
+				class="flex items-center gap-1.5 text-muted transition-colors hover:text-teal desk:border-l desk:border-line desk:pl-[22px]"
+				href="https://github.com/qingjian-team/qingjian"
+				target="_blank"
+				rel="noopener"
+				aria-label="GitHub 仓库"
+				onclick={() => (menu = false)}
+			>
+				<GithubLogoIcon size={19} />
+				<span class="desk:hidden">GitHub</span>
+			</a>
 		</nav>
 	</div>
 </header>
