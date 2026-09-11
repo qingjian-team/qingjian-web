@@ -30,44 +30,68 @@ function plainText(tokens: Tokens.Generic[]): string {
 }
 
 /**
- * 按键：文档里写在反引号里的按键名（`空格`、`⌥ + 1`、`Caps Lock`、`⌃⌥T`）渲染成键帽，
- * 符号用 macOS 菜单里那一套（⌘ ⌥ ⌃ ⇧ ⇪ ⌫ ⌦ ⎋ ⇥ ↩），系统字体自带，不用图标库。
+ * 按键：文档里写在反引号里的按键名（`Space`、`⌥ + 1`、`Caps Lock`、`⌃⌥T`、`Ctrl + Alt + T`）渲染成键帽，
+ * 键名按键帽写（Space / Enter / Backspace / ← → ↑ ↓，与 docs/user/README.md 的写法约定一致），
+ * macOS 修饰键与功能键前面带菜单里那套符号（⌘ ⌥ ⌃ ⇧ ⇪ ⌫ ⌦ ⎋ ⇥ ↩），系统字体自带，不用图标库；
+ * Windows 的 Ctrl / Alt / Win 只有字。早期文档与更新日志里的中文键名（空格、回车、退格、上下左右）仍认，画成同一套。
  * 不像按键的反引号内容（`kubectl`、`Qingjian-<版本>.pkg`、`v1+2`）照旧当代码。
  */
 type Key = { glyph?: string; label: string };
 
+const SPACE: Key = { label: 'Space' };
+const ENTER: Key = { glyph: '↩', label: 'Enter' };
+const BACKSPACE: Key = { glyph: '⌫', label: 'Backspace' };
+const DELETE: Key = { glyph: '⌦', label: 'Delete' };
+const ESC: Key = { glyph: '⎋', label: 'Esc' };
+const TAB: Key = { glyph: '⇥', label: 'Tab' };
+const LEFT: Key = { label: '←' };
+const RIGHT: Key = { label: '→' };
+const UP: Key = { label: '↑' };
+const DOWN: Key = { label: '↓' };
+
 const NAMED_KEYS: Record<string, Key> = {
-	空格: { label: '空格' },
-	Space: { label: '空格' },
-	回车: { glyph: '↩', label: '回车' },
-	Enter: { glyph: '↩', label: '回车' },
-	退格: { glyph: '⌫', label: '退格' },
-	Delete: { glyph: '⌦', label: 'Delete' },
-	Esc: { glyph: '⎋', label: 'Esc' },
-	Tab: { glyph: '⇥', label: 'Tab' },
+	Space: SPACE,
+	Enter: ENTER,
+	Backspace: BACKSPACE,
+	Delete: DELETE,
+	Esc: ESC,
+	Tab: TAB,
 	Shift: { glyph: '⇧', label: 'Shift' },
 	'Caps Lock': { glyph: '⇪', label: 'Caps Lock' },
+	Ctrl: { label: 'Ctrl' },
+	Alt: { label: 'Alt' },
+	Win: { label: 'Win' },
+	Home: { label: 'Home' },
+	End: { label: 'End' },
 	PageUp: { glyph: '⇞', label: 'PageUp' },
 	PageDown: { glyph: '⇟', label: 'PageDown' },
-	上: { glyph: '↑', label: '上' },
-	下: { glyph: '↓', label: '下' },
-	左: { glyph: '←', label: '左' },
-	右: { glyph: '→', label: '右' },
+	'←': LEFT,
+	'→': RIGHT,
+	'↑': UP,
+	'↓': DOWN,
 	数字: { label: '数字' },
-	字母: { label: '字母' }
+	字母: { label: '字母' },
+	// 旧写法
+	空格: SPACE,
+	回车: ENTER,
+	退格: BACKSPACE,
+	上: UP,
+	下: DOWN,
+	左: LEFT,
+	右: RIGHT
 };
 
 /** 符号写法的非修饰键，`⌥⌫`、`⌘→` 这类紧挨着写时用 */
 const GLYPH_KEYS: Record<string, Key> = {
-	'⌫': NAMED_KEYS['退格'],
-	'⌦': NAMED_KEYS['Delete'],
-	'↩': NAMED_KEYS['回车'],
-	'⇥': NAMED_KEYS['Tab'],
-	'⎋': NAMED_KEYS['Esc'],
-	'←': NAMED_KEYS['左'],
-	'→': NAMED_KEYS['右'],
-	'↑': NAMED_KEYS['上'],
-	'↓': NAMED_KEYS['下']
+	'⌫': BACKSPACE,
+	'⌦': DELETE,
+	'↩': ENTER,
+	'⇥': TAB,
+	'⎋': ESC,
+	'←': LEFT,
+	'→': RIGHT,
+	'↑': UP,
+	'↓': DOWN
 };
 
 const MODIFIERS: Record<string, string> = {
