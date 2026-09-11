@@ -17,9 +17,11 @@
 		formatBuiltAt,
 		formatSize,
 		latest,
+		latestFor,
 		platforms,
 		releases,
 		shortCommit,
+		unsignedHints,
 		type Arch,
 		type PlatformId
 	} from '$lib/releases';
@@ -42,8 +44,13 @@
 		detectedPlatform?.available ? detectedPlatform : platforms.find((p) => p.available)!
 	);
 	const heroHidden = $derived(!!detectedPlatform && !detectedPlatform.available && !showMacAnyway);
+	/** 这个平台最新的那版（各平台版本号独立）；还没发过就为 null，页首退回全局最新、不给按钮 */
+	const platformRelease = $derived(latestFor(heroPlatform.id));
+	const heroRelease = $derived(platformRelease ?? latest);
 	/** 主按钮只给一个包：这个平台上与猜到的架构一致的，猜不出按 Apple Silicon；其余架构的包作小字链接 */
-	const heroAssets = $derived(latest.assets.filter((a) => a.platform === heroPlatform.id));
+	const heroAssets = $derived(
+		platformRelease?.assets.filter((a) => a.platform === heroPlatform.id) ?? []
+	);
 	const heroAsset = $derived(
 		heroAssets.find((a) => a.cpu === (arch ?? 'arm64')) ?? heroAssets[0] ?? null
 	);
@@ -57,14 +64,14 @@
 <Seo
 	title="下载"
 	description={downloadsOpen
-		? `下载青简输入法 macOS 版 ${latest.version}（测试版，需要 macOS 13 或更新），查看更新日志与全部版本。Windows 与 Linux 版计划中。`
+		? `下载青简输入法 macOS 版 ${latest.version} 与 Windows 内测版（需要 macOS 13 或 64 位 Windows 11），查看更新日志与全部版本。Linux 版计划中。`
 		: `青简输入法 macOS 版 ${latest.version} 测试版即将开放下载（需要 macOS 13 或更新），先看看这一版有什么。Windows 与 Linux 版计划中。`}
 />
 
 <Subpage
 	title={downloadsOpen ? '下载青简。' : '快好了。'}
 	desc={downloadsOpen
-		? '现在只有 macOS 版，测试阶段。Windows 与 Linux 版在计划中。'
+		? 'macOS 版与 Windows 版都在测试阶段。Linux 版在计划中。'
 		: 'macOS 测试版作者自己每天在用，正在给少数测试者打包；等 Apple 开发者签名办下来就在这里公开下载。Windows 与 Linux 版在计划中。'}
 >
 	<!-- 顶部：当前版本 + 主下载按钮 + 这一版的更新日志 -->
@@ -73,15 +80,16 @@
 	>
 		<div>
 			<div class="flex flex-wrap items-center gap-2">
-				<span class="font-song text-[34px] leading-none font-bold">{latest.version}</span>
+				<span class="font-song text-[34px] leading-none font-bold">{heroRelease.version}</span>
 				<span
 					class="rounded-[20px] bg-[#fff1dc] px-2 py-[3px] text-[11px] font-semibold text-[#b25f00]"
-					>{channelLabel(latest.channel)}</span
+					>{channelLabel(heroRelease.channel)}</span
 				>
+				<span class="text-[13px] text-muted">{heroPlatform.name}</span>
 			</div>
 			<p class="mt-2 text-[13px] text-muted">
-				{latest.date} 发布{#if latest.commit}
-					· 提交 <code class="text-[12px]">{shortCommit(latest.commit)}</code>{/if}
+				{heroRelease.date} 发布{#if heroRelease.commit}
+					· 提交 <code class="text-[12px]">{shortCommit(heroRelease.commit)}</code>{/if}
 			</p>
 
 			<div class="mt-6 flex flex-col gap-3">
@@ -103,7 +111,7 @@
 						{detectedPlatform.name} 版计划中
 					</span>
 					<p class="text-[12px] leading-[1.7] text-muted">
-						你正在用 {detectedPlatform.name}，这个平台的版本还没有做。现在只有 macOS 版，
+						你正在用 {detectedPlatform.name}，这个平台的版本还没有做。现在有 macOS 版与 Windows 版，
 						<button class="text-teal hover:underline" onclick={() => (showMacAnyway = true)}
 							>替 Mac 下载</button
 						>。
@@ -120,8 +128,9 @@
 							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- 安装包是外部下载地址 -->
 							<a class="text-teal hover:underline" href={other.url} download>{other.arch} 版</a
 							>；{/each}文件名与 SHA-256 见
-						<a class="text-teal hover:underline" href="#releases">全部版本</a>。 测试版没有 Apple
-						开发者签名，首次打开要到「系统设置 → 隐私与安全性」点「仍要打开」。
+						<a class="text-teal hover:underline" href="#releases">全部版本</a>。 {unsignedHints[
+							heroPlatform.id
+						]}
 					</p>
 				{/if}
 				<a
@@ -136,7 +145,7 @@
 		<div>
 			<h2 class="mb-3 text-[13px] font-semibold tracking-[1.5px] text-[#18324b]">这一版有什么</h2>
 			<ul class="flex flex-col gap-2">
-				{#each latest.notes as note (note)}
+				{#each heroRelease.notes as note (note)}
 					<li class="flex gap-2 text-[13px] leading-[1.65] text-muted">
 						<span class="mt-[9px] size-[5px] shrink-0 rounded-full bg-teal"></span>
 						<!-- eslint-disable-next-line svelte/no-at-html-tags -- 更新日志来自我们自己发版时生成的 releases.json，渲染时已转义 -->
@@ -193,7 +202,7 @@
 						>
 					</header>
 
-					{#if release === latest}
+					{#if release === heroRelease}
 						<p class="mt-2 text-[12px] text-muted">当前版本，更新日志见页首。</p>
 					{:else}
 						<ul

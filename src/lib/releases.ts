@@ -32,8 +32,8 @@ export const platforms: Platform[] = [
 		name: 'Windows',
 		icon: WindowsLogoIcon,
 		api: 'Text Services Framework（TSF）',
-		requirement: '',
-		available: false
+		requirement: '64 位 Windows 11',
+		available: true
 	},
 	{
 		id: 'linux',
@@ -117,6 +117,21 @@ export const releases: Release[] = feed.releases.map((release) => ({
 }));
 
 export const latest = releases[0];
+
+/**
+ * 某个平台最新的一版：各平台版本号独立（macOS 0.1.1 与 Windows 0.1.0-alpha.1 各自发布），
+ * 下载页主按钮按访问者的平台取有该平台安装包的最新版本，而不是全局最新。没有就为 null。
+ */
+export function latestFor(platform: PlatformId): Release | null {
+	return releases.find((r) => r.assets.some((a) => a.platform === platform)) ?? null;
+}
+
+/** 首次打开没有正式签名时的放行方法，按平台 */
+export const unsignedHints: Record<PlatformId, string> = {
+	macos: '测试版没有 Apple 开发者签名，首次打开要到「系统设置 → 隐私与安全性」点「仍要打开」。',
+	windows: '测试版没有代码签名，SmartScreen 拦截时点「更多信息 → 仍要运行」。',
+	linux: ''
+};
 
 /**
  * 下载是否已公开。关着时下载页显示「即将开放」，只保留版本号、更新日志与平台一览，不列安装包；
