@@ -86,37 +86,101 @@ export type Release = {
 	/** 打包时间，ISO 格式，UTC */
 	builtAt: string;
 	assets: Asset[];
+	/** GitHub Release 的标签（macos-v0.1.1 / windows-v0.1.0-alpha.1 / 旧的 v0.1.0），从安装包地址里认 */
+	tag: string;
+	/** GitHub Release 页面，看原文说明、校验和与构建信息 */
+	pageUrl: string;
+	/** 这一次发布覆盖的平台（一次发布只打一个平台，Release 按平台各发各的） */
+	platform: PlatformId | null;
+};
+
+/**
+ * 同一个版本号在「全部」列表里合成一条：各平台版本号独立，但同号时更新日志共用（CHANGELOG 按版本号索引），
+ * 所以合并不会张冠李戴；每个平台的构建各自带提交号、构建时间与 GitHub Release 链接。
+ */
+export type ReleaseGroup = {
+	version: string;
+	date: string;
+	channel: Channel;
+	notes: string[];
+	/** 按平台顺序（macOS、Windows、Linux） */
+	builds: Release[];
 };
 
 /**
  * 数据来自主仓库发版时生成的 releases.json（`scripts/sync-releases.mjs` 在构建前拉到 src/content/），
  * 版本从新到旧；页面上的「当前版本」取第一条。发新版本不用改这里。
  */
-export const releases: Release[] = feed.releases.map((release) => ({
-	version: release.version,
-	date: release.date,
-	channel: asChannel(release.channel),
-	notes: release.notes,
-	commit: release.commit,
-	builtAt: release.built_at,
-	assets: release.assets.flatMap((asset) =>
-		isPlatformId(asset.platform)
-			? [
-					{
-						platform: asset.platform,
-						arch: asset.arch,
-						cpu: archOfFile(asset.file),
-						file: asset.file,
-						url: asset.url,
-						size: asset.size,
-						sha256: asset.sha256
-					}
-				]
-			: []
-	)
-}));
+export const releases: Release[] = feed.releases
+	.map((release) => {
+		const assets: Asset[] = release.assets.flatMap((asset) =>
+			isPlatformId(asset.platform)
+				? [
+						{
+							platform: asset.platform,
+							arch: asset.arch,
+							cpu: archOfFile(asset.file),
+							file: asset.file,
+							url: asset.url,
+							size: asset.size,
+							sha256: asset.sha256
+						}
+					]
+				: []
+		);
+		const tag = tagOfAssetUrl(assets[0]?.url) ?? `v${release.version}`;
+		return {
+			version: release.version,
+			date: release.date,
+			channel: asChannel(release.channel),
+			notes: release.notes,
+			commit: release.commit,
+			builtAt: release.built_at,
+			assets,
+			tag,
+			pageUrl: `https://github.com/${feed.repository}/releases/tag/${tag}`,
+			platform: assets[0]?.platform ?? null
+		};
+	})
+	// 从新到旧按发布日期排，同一天的按版本号高的在前
+	.sort((a, b) => b.date.localeCompare(a.date) || compareVersions(b.version, a.version));
 
+/** 最新的一次发布（按日期），只作没有平台信息时的退路；按平台取用 latestFor */
 export const latest = releases[0];
+
+/** 同版本号合并后的列表，从新到旧 */
+export const releaseGroups: ReleaseGroup[] = (() => {
+	const groups = new Map<string, ReleaseGroup>();
+	for (const release of releases) {
+		const group = groups.get(release.version);
+		if (group) {
+			group.builds.push(release);
+			if (release.date > group.date) group.date = release.date;
+		} else {
+			groups.set(release.version, {
+				version: release.version,
+				date: release.date,
+				channel: release.channel,
+				notes: release.notes,
+				builds: [release]
+			});
+		}
+	}
+	const order = platforms.map((p) => p.id);
+	return [...groups.values()]
+		.map((group) => ({
+			...group,
+			builds: [...group.builds].sort(
+				(a, b) => order.indexOf(a.platform ?? 'linux') - order.indexOf(b.platform ?? 'linux')
+			)
+		}))
+		.sort((a, b) => b.date.localeCompare(a.date) || compareVersions(b.version, a.version));
+})();
+
+/** 只有发过版本的平台才出现在列表的标签页里 */
+export const releasedPlatforms: Platform[] = platforms.filter((p) =>
+	releases.some((r) => r.platform === p.id)
+);
 
 /**
  * 某个平台最新的一版：各平台版本号独立（macOS 0.1.1 与 Windows 0.1.0-alpha.1 各自发布），
@@ -156,6 +220,27 @@ export function formatSize(bytes: number): string {
 /** ISO 时间显示成 `2026-09-07 08:38 UTC` */
 export function formatBuiltAt(iso: string): string {
 	return iso ? `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC` : '';
+}
+
+/** 安装包地址形如 …/releases/download/<tag>/<file>，标签就在中间那段 */
+function tagOfAssetUrl(url: string | undefined): string | null {
+	const m = url?.match(/\/releases\/download\/([^/]+)\//);
+	return m ? decodeURIComponent(m[1]) : null;
+}
+
+/** 语义化版本比较：主次修订按数字，带预发布后缀的排在同号正式版之前 */
+function compareVersions(a: string, b: string): number {
+	const [ca, pa] = a.split('-', 2);
+	const [cb, pb] = b.split('-', 2);
+	const na = ca.split('.').map(Number);
+	const nb = cb.split('.').map(Number);
+	for (let i = 0; i < Math.max(na.length, nb.length); i++) {
+		const d = (na[i] ?? 0) - (nb[i] ?? 0);
+		if (d !== 0) return d;
+	}
+	if (!pa && pb) return 1;
+	if (pa && !pb) return -1;
+	return (pa ?? '').localeCompare(pb ?? '');
 }
 
 function archOfFile(file: string): Arch | null {

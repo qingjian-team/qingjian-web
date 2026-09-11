@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import ArrowRightIcon from 'phosphor-svelte/lib/ArrowRightIcon';
+	import ArrowSquareOutIcon from 'phosphor-svelte/lib/ArrowSquareOutIcon';
 	import ClockIcon from 'phosphor-svelte/lib/ClockIcon';
 	import DownloadSimpleIcon from 'phosphor-svelte/lib/DownloadSimpleIcon';
 	import Button from '$lib/components/Button.svelte';
@@ -19,11 +20,13 @@
 		latest,
 		latestFor,
 		platforms,
-		releases,
+		releaseGroups,
+		releasedPlatforms,
 		shortCommit,
 		unsignedHints,
 		type Arch,
-		type PlatformId
+		type PlatformId,
+		type ReleaseGroup
 	} from '$lib/releases';
 
 	/**
@@ -56,9 +59,24 @@
 	);
 	const otherAssets = $derived(heroAssets.filter((a) => a !== heroAsset));
 
-	function platformName(id: PlatformId) {
-		return platforms.find((p) => p.id === id)?.name ?? id;
+	function platformName(id: PlatformId | null) {
+		return platforms.find((p) => p.id === id)?.name ?? id ?? '';
 	}
+
+	/** 「全部版本」的标签页：全部，或只看某个发过版本的平台 */
+	let tab = $state<'all' | PlatformId>('all');
+	const tabs = $derived([
+		{ id: 'all' as const, name: '全部' },
+		...releasedPlatforms.map((p) => ({ id: p.id, name: p.name }))
+	]);
+	/** 按标签页过滤：只看某平台时，只留有该平台构建的版本，且每条只显示那个平台的构建 */
+	const shownGroups = $derived<ReleaseGroup[]>(
+		tab === 'all'
+			? releaseGroups
+			: releaseGroups
+					.map((g) => ({ ...g, builds: g.builds.filter((b) => b.platform === tab) }))
+					.filter((g) => g.builds.length > 0)
+	);
 </script>
 
 <Seo
@@ -133,12 +151,24 @@
 						]}
 					</p>
 				{/if}
-				<a
-					class="inline-flex w-fit items-center gap-1 text-[13px] text-teal hover:underline"
-					href={resolve('/docs/[...path]', { path: 'getting-started/install' })}
-				>
-					安装说明 <ArrowRightIcon size={14} />
-				</a>
+				<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+					<a
+						class="inline-flex w-fit items-center gap-1 text-[13px] text-teal hover:underline"
+						href={resolve('/docs/[...path]', { path: 'getting-started/install' })}
+					>
+						安装说明 <ArrowRightIcon size={14} />
+					</a>
+					<!-- eslint-disable svelte/no-navigation-without-resolve -- 外部链接 -->
+					<a
+						class="inline-flex w-fit items-center gap-1 text-[13px] text-teal hover:underline"
+						href={heroRelease.pageUrl}
+						target="_blank"
+						rel="noopener"
+					>
+						在 GitHub 上查看这一版 <ArrowSquareOutIcon size={14} />
+					</a>
+					<!-- eslint-enable svelte/no-navigation-without-resolve -->
+				</div>
 			</div>
 		</div>
 
@@ -189,26 +219,61 @@
 
 	<!-- 全部版本：下载没开放时不列（全是「暂无」的表格没有信息量） -->
 	<section id="releases" class="scroll-mt-3" hidden={!downloadsOpen}>
-		<SectionHeading title="全部版本" desc="从新到旧。每个版本列出各平台的安装包。" />
+		<SectionHeading
+			title="全部版本"
+			desc="按发布日期从新到旧。各平台版本号独立，同一个版本号的合在一条里。"
+		/>
+		<div class="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="按平台筛选">
+			{#each tabs as item (item.id)}
+				<button
+					type="button"
+					role="tab"
+					aria-selected={tab === item.id}
+					class="rounded-[20px] border px-3 py-1 text-[13px] transition-colors {tab === item.id
+						? 'border-teal bg-teal text-white'
+						: 'border-line bg-white/86 text-muted hover:text-ink'}"
+					onclick={() => (tab = item.id)}
+				>
+					{item.name}
+				</button>
+			{/each}
+		</div>
 		<div class="flex flex-col gap-4">
-			{#each releases as release (release.version)}
+			{#each shownGroups as group (group.version)}
 				<article class="rounded-2xl border border-line bg-white/86 p-5 desk:p-6">
 					<header class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-						<h3 class="font-song text-[22px] font-bold">{release.version}</h3>
-						<span class="text-[12px] text-muted"
-							>{release.date} · {channelLabel(release.channel)}{#if release.commit}
-								· 提交 <code>{shortCommit(release.commit)}</code>{/if}{#if release.builtAt}
-								· 构建于 {formatBuiltAt(release.builtAt)}{/if}</span
-						>
+						<h3 class="font-song text-[22px] font-bold">{group.version}</h3>
+						<span class="text-[12px] text-muted">{group.date} · {channelLabel(group.channel)}</span>
 					</header>
+					<!-- 每个平台一行：提交、构建时间、GitHub Release；同版本号多平台时叠着列 -->
+					<ul class="mt-1 flex flex-col gap-0.5 text-[12px] text-muted">
+						{#each group.builds as build (build.tag)}
+							<li class="flex flex-wrap items-center gap-x-2">
+								<strong class="font-medium text-ink">{platformName(build.platform)}</strong>
+								{#if build.commit}<span>· 提交 <code>{shortCommit(build.commit)}</code></span>{/if}
+								{#if build.builtAt}<span>· 构建于 {formatBuiltAt(build.builtAt)}</span>{/if}
+								<span>·</span>
+								<!-- eslint-disable svelte/no-navigation-without-resolve -- 外部链接 -->
+								<a
+									class="inline-flex items-center gap-1 text-teal hover:underline"
+									href={build.pageUrl}
+									target="_blank"
+									rel="noopener"
+								>
+									GitHub Release <ArrowSquareOutIcon size={13} />
+								</a>
+								<!-- eslint-enable svelte/no-navigation-without-resolve -->
+							</li>
+						{/each}
+					</ul>
 
-					{#if release === heroRelease}
+					{#if group.builds.includes(heroRelease)}
 						<p class="mt-2 text-[12px] text-muted">当前版本，更新日志见页首。</p>
 					{:else}
 						<ul
 							class="mt-3 grid gap-x-6 gap-y-1.5 text-[13px] leading-[1.65] text-muted desk:grid-cols-2"
 						>
-							{#each release.notes as note (note)}
+							{#each group.notes as note (note)}
 								<li class="flex gap-2">
 									<span class="mt-[9px] size-[4px] shrink-0 rounded-full bg-[#9fc7c0]"></span>
 									<!-- eslint-disable-next-line svelte/no-at-html-tags -- 更新日志来自我们自己发版时生成的 releases.json，渲染时已转义 -->
@@ -230,7 +295,7 @@
 								</tr>
 							</thead>
 							<tbody>
-								{#each release.assets as asset (asset.file)}
+								{#each group.builds.flatMap((b) => b.assets) as asset (asset.file)}
 									<tr class="border-t border-line">
 										<td class="px-3 py-2 whitespace-nowrap">{platformName(asset.platform)}</td>
 										<td class="px-3 py-2 whitespace-nowrap text-muted">{asset.arch}</td>
