@@ -45,6 +45,7 @@
 ## 它做到了什么
 
 - **好用的拼音输入法先行**：整句转换、拼写纠错、模糊音、双拼、英文模式、emoji，输入效率不为学习让路。
+- **本机小模型重排整句**：随包一个几十 MB 的字级语言模型，停顿时在本机重排候选，不联网。
 - **候选旁的译词**：随包释义表带词性，英语与日语可选，一个候选只显示一条。
 - **生词标记**：在候选窗口里见得还不多的译词画成橙色，看熟了自动消失。
 - **越用越顺**：词频、用户词、个人 n-gram、个人敲错表全在本机学习。
@@ -63,7 +64,7 @@
 
 ```text
 macOS    → Input Method Kit (IMK)      已可用（测试版）
-Windows  → Text Services Framework    计划中
+Windows  → Text Services Framework    已可用（内测版）
 Linux    → IBus / Fcitx               计划中
 ```
 
@@ -79,7 +80,7 @@ Linux    → IBus / Fcitx               计划中
 
 ## 状态
 
-测试版，作者自用中，正在给少数测试者打包。安装包、文档与更新日志都会放到 [qingjian.app](https://qingjian.app)；
+macOS 测试版与 Windows 内测版都已开放下载，安装包暂无开发者签名。安装包、文档与更新日志都放在 [qingjian.app](https://qingjian.app)；
 源码、设计文档与路线图在 [GitHub 主仓库](https://github.com/qingjian-team/qingjian)。
 
 ## 下载页的数据从哪里来

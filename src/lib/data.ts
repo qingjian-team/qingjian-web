@@ -36,7 +36,7 @@ export function isCurrentPath(pathname: string, path: string): boolean {
 
 /** 首页四个卖点条 */
 export const benefits: Entry[] = [
-	{ icon: LeafIcon, title: '全在本机', desc: '拼音、词库、学习、释义都不联网' },
+	{ icon: LeafIcon, title: '全在本机', desc: '拼音、词库、整句模型、学习、释义都不联网' },
 	{ icon: TranslateIcon, title: '候选旁的译词', desc: '词性 + 英语或日语，一次一种' },
 	{ icon: HighlighterIcon, title: '生词标橙', desc: '没见过几次的译词画橙色，看熟就消失' },
 	{ icon: UserIcon, title: '越用越顺', desc: '词频、个人 n-gram、敲错表都在本机学' }
@@ -47,7 +47,7 @@ export const features: Entry[] = [
 	{
 		icon: KeyboardIcon,
 		title: '先是一个好用的输入法',
-		desc: '整句转换、简拼、拼写纠错、模糊音、双拼、英文模式、emoji。输入效率不为学习让路。'
+		desc: '整句转换（本机小模型重排候选）、简拼、拼写纠错、模糊音、双拼、英文模式、emoji。输入效率不为学习让路。'
 	},
 	{
 		icon: TranslateIcon,

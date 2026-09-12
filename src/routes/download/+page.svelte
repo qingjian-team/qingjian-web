@@ -210,7 +210,7 @@
 							? 'bg-[#c9f7e3] font-semibold text-[#008568]'
 							: 'bg-[#f1f2f4] text-[#84909d]'}"
 					>
-						{platform.available ? '测试版' : '计划中'}
+						{platform.available ? (platform.id === 'windows' ? '内测版' : '测试版') : '计划中'}
 					</span>
 				</article>
 			{/each}

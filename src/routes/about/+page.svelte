@@ -9,7 +9,7 @@
 	/** 平台外壳的进度，与主仓库 README「平台」一节一致 */
 	const platforms = [
 		{ name: 'macOS', api: 'Input Method Kit（IMK）', status: '已可用，测试版' },
-		{ name: 'Windows', api: 'Text Services Framework（TSF）', status: '计划中' },
+		{ name: 'Windows', api: 'Text Services Framework（TSF）', status: '已可用，内测版' },
 		{ name: 'Linux', api: 'IBus / Fcitx', status: '计划中' }
 	];
 
@@ -148,7 +148,7 @@
 	<section id="status" class="scroll-mt-3">
 		<SectionHeading
 			title="状态与许可"
-			desc="测试版，作者自用中，正在给少数测试者打包；代码已开源。"
+			desc="macOS 测试版与 Windows 内测版都已开放下载，安装包暂无开发者签名；代码已开源。"
 		/>
 		<div class="grid gap-4 desk:grid-cols-2">
 			<article class="rounded-2xl border border-line bg-white/86 p-5">

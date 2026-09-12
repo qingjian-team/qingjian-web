@@ -29,7 +29,7 @@
 				输入的时候，顺便多认识一个词。
 			</p>
 			<span class="mt-3 inline-block text-[11px] tracking-[.5px] text-[#9aa5b1]">
-				用 Rust 写的拼音输入法 · macOS 测试版
+				用 Rust 写的拼音输入法 · macOS 测试版 · Windows 内测版
 			</span>
 		</div>
 

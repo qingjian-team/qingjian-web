@@ -30,9 +30,9 @@
 				输入的不只是文字。
 			</h1>
 			<p class="mt-4 max-w-[460px] text-[13px] leading-[1.8] text-[#60717f] min-[1101px]:text-sm">
-				青简是一个用 Rust 写的拼音输入法。打字时，候选词旁边多一条你正在学的那门语言的译词。<br
+				青简是一个用 Rust 写的拼音输入法，整句输入，候选由本机小模型重排。<br
 					class="hidden desk:inline"
-				/>不打断，不弹题，只是把它放在那里。
+				/>打字时，候选词旁多一条你正在学的语言的译词，不打断，不弹题。
 			</p>
 			<div
 				class="mt-5 text-[13px] tracking-[.5px] text-[#168679] desk:text-xs min-[1101px]:text-sm"
@@ -43,7 +43,7 @@
 				<b class="px-[6px] font-normal text-[#77a7ac] desk:px-[5px] min-[1101px]:px-[9px]">·</b>
 				越用越顺
 				<b class="px-[6px] font-normal text-[#77a7ac] desk:px-[5px] min-[1101px]:px-[9px]">·</b>
-				macOS 测试版
+				macOS 与 Windows
 			</div>
 			<div class="mt-[25px] flex gap-[13px] desk:gap-2 min-[1101px]:gap-[13px]">
 				<Button class="desk:px-4 min-[1101px]:px-[25px]" href={resolve('/download')}>
