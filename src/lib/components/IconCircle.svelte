@@ -9,7 +9,7 @@
 </script>
 
 <span
-	class="inline-flex shrink-0 items-center justify-center bg-[#e7f5f2] text-[#008474] {className}"
+	class="inline-flex shrink-0 items-center justify-center bg-[#eef5e8] text-[#336f33] {className}"
 >
 	<Icon {size} weight="regular" />
 </span>

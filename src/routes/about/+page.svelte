@@ -134,7 +134,7 @@
 							class="rounded-[20px] px-2 py-[3px] text-[11px] whitespace-nowrap {platform.status.startsWith(
 								'已'
 							)
-								? 'bg-[#c9f7e3] font-semibold text-[#008568]'
+								? 'bg-[#e3efcf] font-semibold text-[#336f33]'
 								: 'bg-[#f1f2f4] text-[#84909d]'}">{platform.status}</span
 						>
 					</div>

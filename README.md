@@ -110,19 +110,21 @@ macOS 测试版与 Windows 内测版都已开放下载，安装包暂无开发�
 
 ## 许可
 
-站点代码以 **GPL-3.0-or-later** 发布（见 [LICENSE](LICENSE)），与主仓库一致。「青简」名字与 logo（`static/brand/`、`static/assets/logo.png`）不在授权范围内；
+站点代码以 **GPL-3.0-or-later** 发布（见 [LICENSE](LICENSE)），与主仓库一致。「青简」名字与 logo（`static/brand/`、`static/assets/logo.svg`）不在授权范围内；
 文档页的内容来自主仓库 `docs/user/`，随主仓库的许可。
 
 ## 品牌资源
 
-`static/brand/` 里是两张 logo：
+`static/brand/` 里的 logo 都由 `qingjian-mark.svg` 生成：
 
-| 文件                           | 用途                                                           |
-| ------------------------------ | -------------------------------------------------------------- |
-| `qingjian-mark.png`            | 纯图标，透明底。favicon、头像、深色背景上用。                  |
-| `qingjian-logo-horizontal.png` | 横版组合标（图标 + 青简 + Qingjian），白底。页头、分享卡片用。 |
+| 文件                                       | 用途                                                                               |
+| ------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `qingjian-mark.svg`                        | 纯图标矢量源文件。站内 favicon、页头、弹窗用的 `static/assets/logo.svg` 与之相同。 |
+| `qingjian-mark.png`                        | 纯图标 1024×1024，透明底。头像、深色背景上用。                                     |
+| `qingjian-logo-horizontal.png`             | 横版组合标（图标 + 青简 + Qingjian）1200×630，白底。分享卡片用。                   |
+| `qingjian-logo-horizontal-transparent.png` | 同上，透明底。README 用。                                                          |
 
-图案是一卷竹简收在对话气泡里：竹简对应「简」，气泡对应输入与交流。
+图案是两竿青竹：竹对应「简」，深色的一节是正在书写的那一支。
 
 ---
 

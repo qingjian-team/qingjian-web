@@ -88,7 +88,7 @@
 		<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
 			<span class="font-song tracking-[.5px]">不积跬步，无以至千里。</span>
 			<button
-				class="inline-flex items-center gap-[5px] text-[#668679] transition-colors hover:text-[#007d6c] disabled:cursor-default disabled:text-[#8b95a4]"
+				class="inline-flex items-center gap-[5px] text-[#6a856a] transition-colors hover:text-teal disabled:cursor-default disabled:text-[#8b95a4]"
 				onclick={() => (ui.wind = !ui.wind)}
 				disabled={ui.reducedMotion}
 				aria-pressed={ui.animate}

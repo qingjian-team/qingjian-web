@@ -145,7 +145,7 @@
 						{#each data.children as child (child.slug)}
 							<li>
 								<a
-									class="block h-full rounded-lg border border-line bg-white px-4 py-3 transition-colors hover:border-[#abd7d0]"
+									class="block h-full rounded-lg border border-line bg-white px-4 py-3 transition-colors hover:border-[#bcd98f]"
 									href={href(child.slug)}
 								>
 									<strong class="text-[15px] font-medium text-ink">{child.title}</strong>

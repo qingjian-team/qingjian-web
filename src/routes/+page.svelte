@@ -35,14 +35,14 @@
 				/>打字时，候选词旁多一条你正在学的语言的译词，不打断，不弹题。
 			</p>
 			<div
-				class="mt-5 text-[13px] tracking-[.5px] text-[#168679] desk:text-xs min-[1101px]:text-sm"
+				class="mt-5 text-[13px] tracking-[.5px] text-[#336f33] desk:text-xs min-[1101px]:text-sm"
 			>
 				全在本机
-				<b class="px-[6px] font-normal text-[#77a7ac] desk:px-[5px] min-[1101px]:px-[9px]">·</b>
+				<b class="px-[6px] font-normal text-[#99b799] desk:px-[5px] min-[1101px]:px-[9px]">·</b>
 				一次一种语言
-				<b class="px-[6px] font-normal text-[#77a7ac] desk:px-[5px] min-[1101px]:px-[9px]">·</b>
+				<b class="px-[6px] font-normal text-[#99b799] desk:px-[5px] min-[1101px]:px-[9px]">·</b>
 				越用越顺
-				<b class="px-[6px] font-normal text-[#77a7ac] desk:px-[5px] min-[1101px]:px-[9px]">·</b>
+				<b class="px-[6px] font-normal text-[#99b799] desk:px-[5px] min-[1101px]:px-[9px]">·</b>
 				macOS 与 Windows
 			</div>
 			<div class="mt-[25px] flex gap-[13px] desk:gap-2 min-[1101px]:gap-[13px]">
@@ -56,7 +56,7 @@
 			</div>
 			<!-- 楷体手写点缀：窄屏和宽屏显示，中间档位置不够则藏起来 -->
 			<div
-				class="mt-[25px] ml-[3px] block rotate-[-6deg] font-kai text-[16px] leading-[1.4] tracking-[2px] text-[#72999e] desk:hidden wide:mt-[30px] wide:block wide:text-lg"
+				class="mt-[25px] ml-[3px] block rotate-[-6deg] font-kai text-[16px] leading-[1.4] tracking-[2px] text-[#7a9b7a] desk:hidden wide:mt-[30px] wide:block wide:text-lg"
 			>
 				输入的时候，<br /><span class="pl-[35px]">顺便多认识一个词。</span>
 			</div>

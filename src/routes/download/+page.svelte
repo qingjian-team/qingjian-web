@@ -113,7 +113,7 @@
 			<div class="mt-6 flex flex-col gap-3">
 				{#if !downloadsOpen}
 					<span
-						class="inline-flex w-fit items-center gap-2 rounded-xl border border-dashed border-[#abd7d0] bg-[#f0f7f5] px-[18px] py-[10px] text-sm font-medium text-teal"
+						class="inline-flex w-fit items-center gap-2 rounded-xl border border-dashed border-[#bcd98f] bg-[#f0f7f5] px-[18px] py-[10px] text-sm font-medium text-teal"
 					>
 						<ClockIcon size={17} /> 即将开放下载
 					</span>
@@ -207,7 +207,7 @@
 					</div>
 					<span
 						class="ml-auto rounded-[20px] px-2 py-[3px] text-[11px] whitespace-nowrap {platform.available
-							? 'bg-[#c9f7e3] font-semibold text-[#008568]'
+							? 'bg-[#e3efcf] font-semibold text-[#336f33]'
 							: 'bg-[#f1f2f4] text-[#84909d]'}"
 					>
 						{platform.available ? (platform.id === 'windows' ? '内测版' : '测试版') : '计划中'}
@@ -275,7 +275,7 @@
 						>
 							{#each group.notes as note (note)}
 								<li class="flex gap-2">
-									<span class="mt-[9px] size-[4px] shrink-0 rounded-full bg-[#9fc7c0]"></span>
+									<span class="mt-[9px] size-[4px] shrink-0 rounded-full bg-[#94be52]"></span>
 									<!-- eslint-disable-next-line svelte/no-at-html-tags -- 更新日志来自我们自己发版时生成的 releases.json，渲染时已转义 -->
 									<span>{@html renderInline(note)}</span>
 								</li>

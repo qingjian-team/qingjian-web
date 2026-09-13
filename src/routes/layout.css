@@ -10,10 +10,10 @@
 	--font-kai: 'STKaiti', 'Kaiti SC', serif;
 	--font-georgia: Georgia, serif;
 
-	--color-teal: #008576;
-	--color-teal-dark: #006e62;
+	--color-teal: #336f33;
+	--color-teal-dark: #285a28;
 	--color-muted: #788395;
-	--color-line: #e4efef;
+	--color-line: #e6efe4;
 	--color-ink: #112238;
 
 	/* 断点按原设计的 760/980/1280 三档来，样式写成移动优先 */
@@ -77,7 +77,7 @@
 	button:focus-visible,
 	a:focus-visible,
 	input:focus-visible {
-		outline: 3px solid #61bfb4;
+		outline: 3px solid #94be52;
 		outline-offset: 4px;
 	}
 

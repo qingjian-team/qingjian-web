@@ -83,7 +83,7 @@
 			<XIcon size={22} />
 		</button>
 
-		<img class="mb-3.5 h-[50px] w-12 object-contain" src="/assets/logo.png" alt="" />
+		<img class="mb-3.5 h-[50px] w-auto" src="/assets/logo.svg" alt="" />
 		<h2 id="modal-title" class="mb-3 font-song text-[26px] font-bold">{copy.title}</h2>
 		<p class="my-[10px] mb-4 text-sm leading-[1.55] text-muted">{copy.body}</p>
 		<Button onclick={() => (ui.modal = null)}>知道了 <CheckIcon size={17} /></Button>

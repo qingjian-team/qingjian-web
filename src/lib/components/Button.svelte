@@ -15,7 +15,7 @@
 	const variants = {
 		solid:
 			'border-teal bg-teal px-[25px] text-white shadow-[inset_0_0_10px_#ffffff13] hover:bg-teal-dark',
-		outline: 'border-teal bg-white/72 px-[22px] text-teal hover:bg-[#edf8f6]'
+		outline: 'border-teal bg-white/72 px-[22px] text-teal hover:bg-[#eef5e8]'
 	};
 </script>
 
