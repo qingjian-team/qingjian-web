@@ -8,8 +8,8 @@
 //
 // 从 git 拉是稀疏浅克隆，只取 docs/user：
 //   QINGJIAN_DOCS_REPO   仓库地址，缺省 https://github.com/qingjian-team/qingjian.git
-//   QINGJIAN_DOCS_REF    分支、标签或提交号；缺省是 src/content/upstream.json 里记的主仓库提交（主仓库 workflow 发版 /
-//                        改文档时写进来的），没有就 main
+//   QINGJIAN_DOCS_REF    分支、标签或提交号；缺省是 src/content/upstream.json 里记的主仓库提交（主仓库发版 workflow
+//                        写进来的，文档只随发版更新），没有就 main
 //   QINGJIAN_DOCS_TOKEN  只读令牌，仅在主仓库私有时需要（现在公开，留空即可）
 //
 // 产物（都在 .gitignore 里）：
