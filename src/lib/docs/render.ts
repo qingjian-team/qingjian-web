@@ -215,7 +215,12 @@ export function renderMarkdown(
 				const text = plainText(tokens);
 				const id = headingId(text);
 				if (depth === 2) toc.push({ id, text });
-				return `<h${depth} id="${id}">${this.parser.parseInline(tokens)}</h${depth}>\n`;
+				// 二三级标题带一个悬停才出现的 # 链接，方便复制某一节的地址
+				const anchor =
+					depth === 2 || depth === 3
+						? `<a class="anchor" href="#${encodeURIComponent(id)}" aria-label="本节链接">#</a>`
+						: '';
+				return `<h${depth} id="${id}">${this.parser.parseInline(tokens)}${anchor}</h${depth}>\n`;
 			},
 			codespan({ text }) {
 				return renderCodespan(text);

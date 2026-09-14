@@ -18,6 +18,26 @@
 	font-weight: 600;
 	scroll-margin-top: 100px;
 }
+/* 标题右侧的 # 链接：平时隐形，鼠标悬停在标题上或键盘聚焦到它时出现 */
+.doc h2 .anchor,
+.doc h3 .anchor {
+	margin-left: 8px;
+	font-family: var(--font-sans);
+	font-size: 0.8em;
+	font-weight: 400;
+	color: var(--color-teal);
+	text-decoration: none;
+	opacity: 0;
+	transition: opacity 0.15s;
+}
+.doc h2:hover .anchor,
+.doc h3:hover .anchor,
+.doc .anchor:focus-visible {
+	opacity: 0.7;
+}
+.doc .anchor:hover {
+	opacity: 1;
+}
 .doc p,
 .doc li {
 	font-size: 14px;

@@ -19,7 +19,7 @@
 		manual = { ...manual, [group]: !isOpen(group) };
 	};
 
-	/** 页内目录高亮的二级标题：滚动时取最后一个顶部已越过导航栏下沿的 */
+	/** 页内目录高亮的二级标题：滚动时取最后一个顶部已越过导航栏下沿的；地址栏的 # 跟着它走，复制链接就是当前这一节 */
 	let active = $state('');
 
 	$effect(() => {
@@ -35,7 +35,16 @@
 			}
 			const bottom = window.innerHeight + window.scrollY;
 			if (ids.length && bottom >= document.documentElement.scrollHeight - 2) current = ids.at(-1)!;
-			active = current;
+			if (current !== active) {
+				active = current;
+				// 还在第一个标题上方时不挂 #，地址保持整页
+				const atTop =
+					!ids.length ||
+					(document.getElementById(ids[0])?.getBoundingClientRect().top ?? 0) > OFFSET;
+				const hash = atTop ? '' : `#${encodeURIComponent(current)}`;
+				if (hash !== location.hash)
+					history.replaceState(history.state, '', `${location.pathname}${location.search}${hash}`);
+			}
 		};
 		const schedule = () => {
 			if (!frame) frame = requestAnimationFrame(update);
