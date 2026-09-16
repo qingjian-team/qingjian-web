@@ -92,6 +92,8 @@ export type Release = {
 	pageUrl: string;
 	/** 这一次发布覆盖的平台（一次发布只打一个平台，Release 按平台各发各的） */
 	platform: PlatformId | null;
+	/** 本地开发时从主仓库 CHANGELOG.md 合进来的未发布版本：没有安装包、日期为空，线上不会有 */
+	preview: boolean;
 };
 
 /**
@@ -105,6 +107,8 @@ export type ReleaseGroup = {
 	notes: string[];
 	/** 按平台顺序（macOS、Windows、Linux） */
 	builds: Release[];
+	/** 整组都是本地预览（见 Release.preview） */
+	preview: boolean;
 };
 
 /**
@@ -128,7 +132,8 @@ export const releases: Release[] = feed.releases
 					]
 				: []
 		);
-		const tag = tagOfAssetUrl(assets[0]?.url) ?? `v${release.version}`;
+		const preview = (release as { preview?: boolean }).preview === true;
+		const tag = preview ? '' : (tagOfAssetUrl(assets[0]?.url) ?? `v${release.version}`);
 		return {
 			version: release.version,
 			date: release.date,
@@ -138,15 +143,21 @@ export const releases: Release[] = feed.releases
 			builtAt: release.built_at,
 			assets,
 			tag,
-			pageUrl: `https://github.com/${feed.repository}/releases/tag/${tag}`,
-			platform: assets[0]?.platform ?? null
+			pageUrl: preview ? '' : `https://github.com/${feed.repository}/releases/tag/${tag}`,
+			platform: assets[0]?.platform ?? null,
+			preview
 		};
 	})
-	// 从新到旧按发布日期排，同一天的按版本号高的在前
-	.sort((a, b) => b.date.localeCompare(a.date) || compareVersions(b.version, a.version));
+	// 本地预览的未发布版本排最前，其余从新到旧按发布日期排，同一天的按版本号高的在前
+	.sort(
+		(a, b) =>
+			Number(b.preview) - Number(a.preview) ||
+			b.date.localeCompare(a.date) ||
+			compareVersions(b.version, a.version)
+	);
 
-/** 最新的一次发布（按日期），只作没有平台信息时的退路；按平台取用 latestFor */
-export const latest = releases[0];
+/** 最新的一次发布（按日期），只作没有平台信息时的退路；按平台取用 latestFor。本地预览的不算 */
+export const latest = releases.find((r) => !r.preview) ?? releases[0];
 
 /** 同版本号合并后的列表，从新到旧 */
 export const releaseGroups: ReleaseGroup[] = (() => {
@@ -162,7 +173,8 @@ export const releaseGroups: ReleaseGroup[] = (() => {
 				date: release.date,
 				channel: release.channel,
 				notes: release.notes,
-				builds: [release]
+				builds: [release],
+				preview: release.preview
 			});
 		}
 	}
@@ -174,8 +186,77 @@ export const releaseGroups: ReleaseGroup[] = (() => {
 				(a, b) => order.indexOf(a.platform ?? 'linux') - order.indexOf(b.platform ?? 'linux')
 			)
 		}))
-		.sort((a, b) => b.date.localeCompare(a.date) || compareVersions(b.version, a.version));
+		.sort(
+			(a, b) =>
+				Number(b.preview) - Number(a.preview) ||
+				b.date.localeCompare(a.date) ||
+				compareVersions(b.version, a.version)
+		);
 })();
+
+/**
+ * 本地预览的版本还没有构建，按平台筛选时靠更新日志本身判断它属于谁：
+ * 条目全带「Windows：」/「macOS：」前缀就只属于那些平台，有一条不带前缀就是两端共用。
+ */
+export function previewPlatforms(notes: string[]): PlatformId[] {
+	const found = new Set<PlatformId>();
+	for (const note of splitContributors(notes).notes) {
+		if (/^Windows[：:]/.test(note)) found.add('windows');
+		else if (/^macOS[：:]/.test(note)) found.add('macos');
+		else if (!/^\*\*已知问题/.test(note)) return ['macos', 'windows'];
+	}
+	return found.size > 0 ? [...found] : ['macos', 'windows'];
+}
+
+/** 更新日志「本版社区贡献」行里的一个人：GitHub 用户名与贡献内容 */
+export type Contributor = {
+	login: string;
+	note: string;
+};
+
+const CONTRIBUTORS_PREFIX = /^本版社区贡献[：:]\s*/;
+
+/**
+ * 把「本版社区贡献：@a（…）、@b（…）」这一行从更新日志里摘出来单独渲染成头像；其余条目原样返回。
+ * 用户名后面的括号是贡献内容，没有括号也认。
+ */
+export function splitContributors(notes: string[]): {
+	notes: string[];
+	contributors: Contributor[];
+} {
+	const contributors: Contributor[] = [];
+	const rest: string[] = [];
+	for (const note of notes) {
+		if (!CONTRIBUTORS_PREFIX.test(note)) {
+			rest.push(note);
+			continue;
+		}
+		const body = note.replace(CONTRIBUTORS_PREFIX, '');
+		for (const m of body.matchAll(
+			/@([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)(?:（([^）]*)）)?/g
+		)) {
+			contributors.push({ login: m[1], note: m[2]?.trim() ?? '' });
+		}
+	}
+	return { notes: rest, contributors };
+}
+
+/**
+ * 更新日志里的 `#123` 与 `@name` 变成指向 GitHub 的 Markdown 链接，再交给 renderInline 渲染。
+ * issue 与 PR 用同一个 /issues/ 地址，GitHub 会把 PR 号转到 /pull/。
+ */
+export function linkRefs(note: string): string {
+	return note
+		.replace(
+			/(^|[^\w&#])#(\d+)\b/g,
+			(_, before: string, n: string) =>
+				`${before}[#${n}](https://github.com/${feed.repository}/issues/${n})`
+		)
+		.replace(
+			/(^|[^\w`@])@([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)\b/g,
+			(_, before: string, name: string) => `${before}[@${name}](https://github.com/${name})`
+		);
+}
 
 /** 只有发过版本的平台才出现在列表的标签页里 */
 export const releasedPlatforms: Platform[] = platforms.filter((p) =>
@@ -308,4 +389,15 @@ export async function detectArch(): Promise<Arch | null> {
 		// WebGL 被禁用等情况
 	}
 	return null;
+}
+
+/**
+ * 一条更新日志渲染成 HTML：先把 `#123` / `@name` 变成链接再走 Markdown，
+ * 再给这些 GitHub 链接补上站内链接的样式与新标签页打开——它们来自我们自己写的 CHANGELOG，不是用户输入。
+ */
+export function renderNote(note: string, renderInline: (markdown: string) => string): string {
+	return renderInline(linkRefs(note)).replace(
+		/<a href="(https:\/\/github\.com\/[^"]+)">/g,
+		'<a href="$1" class="font-medium text-teal hover:underline" target="_blank" rel="noopener">'
+	);
 }

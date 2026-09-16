@@ -6,6 +6,7 @@
 	import ClockIcon from 'phosphor-svelte/lib/ClockIcon';
 	import DownloadSimpleIcon from 'phosphor-svelte/lib/DownloadSimpleIcon';
 	import Button from '$lib/components/Button.svelte';
+	import Contributors from '$lib/components/Contributors.svelte';
 	import Seo from '$lib/components/Seo.svelte';
 	import SectionHeading from '$lib/components/SectionHeading.svelte';
 	import Subpage from '$lib/components/Subpage.svelte';
@@ -19,10 +20,13 @@
 		formatSize,
 		latest,
 		latestFor,
+		previewPlatforms,
+		renderNote,
 		platforms,
 		releaseGroups,
 		releasedPlatforms,
 		shortCommit,
+		splitContributors,
 		unsignedHints,
 		type Arch,
 		type PlatformId,
@@ -58,6 +62,8 @@
 		heroAssets.find((a) => a.cpu === (arch ?? 'arm64')) ?? heroAssets[0] ?? null
 	);
 	const otherAssets = $derived(heroAssets.filter((a) => a !== heroAsset));
+	/** 页首的更新日志：贡献者那一行摘出来画成头像 */
+	const heroNotes = $derived(splitContributors(heroRelease.notes));
 
 	function platformName(id: PlatformId | null) {
 		return platforms.find((p) => p.id === id)?.name ?? id ?? '';
@@ -75,7 +81,11 @@
 			? releaseGroups
 			: releaseGroups
 					.map((g) => ({ ...g, builds: g.builds.filter((b) => b.platform === tab) }))
-					.filter((g) => g.builds.length > 0)
+					// 本地预览的版本没有构建，按更新日志的平台前缀判断归属
+					.filter(
+						(g) =>
+							g.builds.length > 0 || (g.preview && previewPlatforms(g.notes).some((p) => p === tab))
+					)
 	);
 </script>
 
@@ -175,14 +185,17 @@
 		<div>
 			<h2 class="mb-3 text-[13px] font-semibold tracking-[1.5px] text-[#18324b]">这一版有什么</h2>
 			<ul class="flex flex-col gap-2">
-				{#each heroRelease.notes as note (note)}
+				{#each heroNotes.notes as note (note)}
 					<li class="flex gap-2 text-[13px] leading-[1.65] text-muted">
 						<span class="mt-[9px] size-[5px] shrink-0 rounded-full bg-teal"></span>
 						<!-- eslint-disable-next-line svelte/no-at-html-tags -- 更新日志来自我们自己发版时生成的 releases.json，渲染时已转义 -->
-						<span>{@html renderInline(note)}</span>
+						<span>{@html renderNote(note, renderInline)}</span>
 					</li>
 				{/each}
 			</ul>
+			{#if heroNotes.contributors.length > 0}
+				<Contributors contributors={heroNotes.contributors} class="mt-4" />
+			{/if}
 		</div>
 	</section>
 
@@ -240,14 +253,19 @@
 		</div>
 		<div class="flex flex-col gap-4">
 			{#each shownGroups as group (group.version)}
+				{@const groupNotes = splitContributors(group.notes)}
 				<article class="rounded-2xl border border-line bg-white/86 p-5 desk:p-6">
 					<header class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
 						<h3 class="font-song text-[22px] font-bold">{group.version}</h3>
-						<span class="text-[12px] text-muted">{group.date} · {channelLabel(group.channel)}</span>
+						<span class="text-[12px] text-muted"
+							>{group.preview ? '未发布 · 本地预览' : group.date} · {channelLabel(
+								group.channel
+							)}</span
+						>
 					</header>
-					<!-- 每个平台一行：提交、构建时间、GitHub Release；同版本号多平台时叠着列 -->
-					<ul class="mt-1 flex flex-col gap-0.5 text-[12px] text-muted">
-						{#each group.builds as build (build.tag)}
+					<!-- 每个平台一行：提交、构建时间、GitHub Release；同版本号多平台时叠着列。本地预览的版本还没有构建 -->
+					<ul class="mt-1 flex flex-col gap-0.5 text-[12px] text-muted" hidden={group.preview}>
+						{#each group.builds as build (build.tag || build.version)}
 							<li class="flex flex-wrap items-center gap-x-2">
 								<strong class="font-medium text-ink">{platformName(build.platform)}</strong>
 								{#if build.commit}<span>· 提交 <code>{shortCommit(build.commit)}</code></span>{/if}
@@ -273,17 +291,20 @@
 						<ul
 							class="mt-3 grid gap-x-6 gap-y-1.5 text-[13px] leading-[1.65] text-muted desk:grid-cols-2"
 						>
-							{#each group.notes as note (note)}
+							{#each groupNotes.notes as note (note)}
 								<li class="flex gap-2">
 									<span class="mt-[9px] size-[4px] shrink-0 rounded-full bg-[#94be52]"></span>
 									<!-- eslint-disable-next-line svelte/no-at-html-tags -- 更新日志来自我们自己发版时生成的 releases.json，渲染时已转义 -->
-									<span>{@html renderInline(note)}</span>
+									<span>{@html renderNote(note, renderInline)}</span>
 								</li>
 							{/each}
 						</ul>
+						{#if groupNotes.contributors.length > 0}
+							<Contributors contributors={groupNotes.contributors} class="mt-3" />
+						{/if}
 					{/if}
 
-					<div class="mt-4 overflow-x-auto rounded-lg border border-line">
+					<div class="mt-4 overflow-x-auto rounded-lg border border-line" hidden={group.preview}>
 						<table class="w-full min-w-[560px] text-left text-[13px]">
 							<thead class="bg-[#f0f7f2] text-[12px] text-[#4d6b62]">
 								<tr>

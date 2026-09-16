@@ -9,6 +9,10 @@
 //
 // 产物（在 .gitignore 里）：src/content/releases.json
 // 拉不到时：本地已有上一次的产物就沿用并警告（离线开发），没有就报错（CI 不应该带着旧数据发布）。
+//
+// 本地开发（非 CI）还会把相邻主仓库的 CHANGELOG.md 合进来预览，与 sync-docs 拉本地文档一个道理：
+// 已发布的版本用本地条目覆盖（改措辞立刻能看），还没发布的节（日期写「未发布」）加成没有安装包的预览条目。
+// QINGJIAN_CHANGELOG_SOURCE 可指定别的路径；CI 不做，线上只认发版时生成的 releases.json。
 
 import {
 	copyFileSync,
@@ -96,4 +100,55 @@ if (
 	}
 }
 const feed = JSON.parse(readFileSync(TARGET, 'utf8'));
+
+/** 解析 CHANGELOG.md：`## 版本 · 日期或未发布 · 渠道` 一节，`- ` 一条；返回 [{version, date, channel, notes}]，日期未发布为空串 */
+function parseChangelog(text) {
+	const sections = [];
+	let current = null;
+	for (const raw of text.split('\n')) {
+		const line = raw.trimEnd();
+		const heading = line.match(/^##\s+(\S+)\s*·\s*(\S+)\s*·\s*(\S+)\s*$/);
+		if (heading) {
+			const [, version, date, channel] = heading;
+			current = { version, date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '', channel, notes: [] };
+			sections.push(current);
+		} else if (current && line.startsWith('- ')) {
+			current.notes.push(line.slice(2).trim());
+		}
+	}
+	return sections;
+}
+
+const changelog = process.env.QINGJIAN_CHANGELOG_SOURCE ?? join(root, '..', 'ime', 'CHANGELOG.md');
+if (!process.env.CI && existsSync(changelog)) {
+	// 上一次合进去的预览条目先丢掉，按现在的 CHANGELOG 重合，删掉的节不会残留
+	feed.releases = feed.releases.filter((release) => !release.preview);
+	const sections = parseChangelog(readFileSync(changelog, 'utf8'));
+	let replaced = 0;
+	let added = 0;
+	for (const section of sections) {
+		const released = feed.releases.find((release) => release.version === section.version);
+		if (released) {
+			released.notes = section.notes;
+			replaced++;
+		} else {
+			feed.releases.push({
+				version: section.version,
+				date: section.date,
+				channel: section.channel,
+				notes: section.notes,
+				commit: '',
+				built_at: '',
+				toolchain: '',
+				assets: [],
+				preview: true
+			});
+			added++;
+		}
+	}
+	writeFileSync(TARGET, `${JSON.stringify(feed, null, 2)}\n`);
+	log(
+		`本地预览：合入 ${changelog}，覆盖 ${replaced} 个已发布版本的更新日志，加 ${added} 个未发布版本`
+	);
+}
 log(`${feed.releases.length} 个版本，最新 ${feed.latest} → src/content/releases.json`);
