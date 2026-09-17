@@ -266,9 +266,11 @@ export const releasedPlatforms: Platform[] = platforms.filter((p) =>
 /**
  * 某个平台最新的一版：各平台版本号独立（macOS 0.1.1 与 Windows 0.1.0-alpha.1 各自发布），
  * 下载页主按钮按访问者的平台取有该平台安装包的最新版本，而不是全局最新。没有就为 null。
+ * 有正式版就取最新的正式版（测试渠道的版本只出现在「全部版本」里），一个正式版都没有才取最新一版。
  */
 export function latestFor(platform: PlatformId): Release | null {
-	return releases.find((r) => r.assets.some((a) => a.platform === platform)) ?? null;
+	const forPlatform = releases.filter((r) => r.assets.some((a) => a.platform === platform));
+	return forPlatform.find((r) => r.channel === 'stable') ?? forPlatform[0] ?? null;
 }
 
 /** 首次打开没有正式签名时的放行方法，按平台 */
