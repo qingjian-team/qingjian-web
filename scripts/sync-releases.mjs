@@ -7,7 +7,9 @@
 // 下载优先用 curl（会走 shell 的 https_proxy，超时 20 秒），没有 curl 再用 Node 的 fetch（不认代理环境变量）。
 // 本地开发（非 CI）时，一小时内拉过就直接用本地文件，不每次联网。
 //
-// 产物（在 .gitignore 里）：src/content/releases.json
+// 产物（在 .gitignore 里）：src/content/releases.json，以及原样发布给软件内「检查更新」读的
+// static/releases.json 与 static/releases.json.sig（ed25519 分离签名，字节不能动，所以不经 JSON 重排）。
+// 主仓库的 Release 上没有 .sig（0.1.3 及之前）时不发布这两个文件。
 // 拉不到时：本地已有上一次的产物就沿用并警告（离线开发），没有就报错（CI 不应该带着旧数据发布）。
 //
 // 本地开发（非 CI）还会把相邻主仓库的 CHANGELOG.md 合进来预览，与 sync-docs 拉本地文档一个道理：
@@ -28,6 +30,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const TARGET = join(root, 'src/content/releases.json');
+const PUBLISHED = join(root, 'static/releases.json');
 const DEFAULT_URL =
 	'https://github.com/qingjian-team/qingjian/releases/latest/download/releases.json';
 
@@ -50,11 +53,10 @@ function validate(feed) {
 const FRESH_MS = 60 * 60 * 1000;
 const TIMEOUT_MS = 20_000;
 
-/** 下载 URL 的正文：curl 优先，退回 fetch */
+/** 下载 URL 的正文（原始字节）：curl 优先，退回 fetch */
 async function download(url) {
 	try {
 		return execFileSync('curl', ['-fsSL', '--max-time', String(TIMEOUT_MS / 1000), url], {
-			encoding: 'utf8',
 			stdio: ['ignore', 'pipe', 'inherit']
 		});
 	} catch (error) {
@@ -65,7 +67,19 @@ async function download(url) {
 		signal: AbortSignal.timeout(TIMEOUT_MS)
 	});
 	if (!response.ok) throw new Error(`HTTP ${response.status}`);
-	return response.text();
+	return Buffer.from(await response.arrayBuffer());
+}
+
+/** 把索引与它的签名原样放进 static/；签名拉不到就两个都不放（没签名的索引软件不认，放了也没用） */
+async function publish(source, bytes) {
+	try {
+		const signature = await download(`${source}.sig`);
+		writeFileSync(PUBLISHED, bytes);
+		writeFileSync(`${PUBLISHED}.sig`, signature);
+		log('static/releases.json 与 .sig 已就位（软件内检查更新读它）');
+	} catch (error) {
+		log(`没有拉到 releases.json.sig（${error.message}），不发布 static/releases.json`);
+	}
 }
 
 const source = process.env.QINGJIAN_RELEASES_SOURCE ?? DEFAULT_URL;
@@ -82,14 +96,19 @@ if (
 	try {
 		if (isUrl) {
 			log(`从 ${source} 拉取`);
-			const text = await download(source);
-			validate(JSON.parse(text));
-			writeFileSync(TARGET, text);
+			const bytes = await download(source);
+			validate(JSON.parse(bytes.toString('utf8')));
+			writeFileSync(TARGET, bytes);
+			await publish(source, bytes);
 		} else {
 			const path = resolve(root, source);
 			log(`从本地文件读取 ${path}`);
 			validate(JSON.parse(readFileSync(path, 'utf8')));
 			copyFileSync(path, TARGET);
+			if (existsSync(`${path}.sig`)) {
+				copyFileSync(path, PUBLISHED);
+				copyFileSync(`${path}.sig`, `${PUBLISHED}.sig`);
+			}
 		}
 	} catch (error) {
 		if (existsSync(TARGET)) {

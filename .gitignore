@@ -6,6 +6,8 @@ node_modules
 /static/docs-assets
 # 主仓库 Release 上的 releases.json（scripts/sync-releases.mjs）
 /src/content/releases.json
+/static/releases.json
+/static/releases.json.sig
 .output
 .vercel
 .netlify
