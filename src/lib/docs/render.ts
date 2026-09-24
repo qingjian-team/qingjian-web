@@ -8,11 +8,11 @@ export type TocEntry = {
 
 /**
  * 标题的锚点 id：保留中文，空格换成连字符；文档里的 `#快捷键` 这类链接直接对得上。
- * `/ ? # % &` 这些 URL 保留字符也并进连字符（「拼音 / 注音」→ `拼音-注音`）：留着的话链接里要转义成 `%2F`，
+ * `/ ? # % & + ; , : @ = $` 这些 URL 保留字符也并进连字符（「拼音 / 注音」→ `拼音-注音`）：留着的话链接里要转义成 `%2F`、`%2B`，
  * 预渲染核对锚点时与元素的 id 对不上，整站构建失败（2026-09-17 发 0.1.3 时踩到）。
  */
 export function headingId(text: string): string {
-	return text.trim().replace(/[\s/?#%&]+/g, '-');
+	return text.trim().replace(/[\s/?#%&+;,:@=$]+/g, '-');
 }
 
 function escapeHtml(text: string): string {
