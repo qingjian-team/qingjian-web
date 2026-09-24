@@ -129,10 +129,20 @@ function parseChangelog(text) {
 		const heading = line.match(/^##\s+(\S+)\s*·\s*(\S+)\s*·\s*(\S+)\s*$/);
 		if (heading) {
 			const [, version, date, channel] = heading;
-			current = { version, date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '', channel, notes: [] };
+			current = {
+				version,
+				date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '',
+				channel,
+				notes: [],
+				mirrors: []
+			};
 			sections.push(current);
 		} else if (current && line.startsWith('- ')) {
 			current.notes.push(line.slice(2).trim());
+		} else if (current && /^网盘[：:]/.test(line)) {
+			for (const [, name, url] of line.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g)) {
+				current.mirrors.push({ name, url });
+			}
 		}
 	}
 	return sections;
@@ -149,6 +159,7 @@ if (!process.env.CI && existsSync(changelog)) {
 		const released = feed.releases.find((release) => release.version === section.version);
 		if (released) {
 			released.notes = section.notes;
+			released.mirrors = section.mirrors;
 			replaced++;
 		} else {
 			feed.releases.push({
@@ -156,6 +167,7 @@ if (!process.env.CI && existsSync(changelog)) {
 				date: section.date,
 				channel: section.channel,
 				notes: section.notes,
+				mirrors: section.mirrors,
 				commit: '',
 				built_at: '',
 				toolchain: '',

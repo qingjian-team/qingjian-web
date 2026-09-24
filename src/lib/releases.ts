@@ -39,9 +39,9 @@ export const platforms: Platform[] = [
 		id: 'linux',
 		name: 'Linux',
 		icon: LinuxLogoIcon,
-		api: 'IBus / Fcitx',
-		requirement: '',
-		available: false
+		api: 'Fcitx5',
+		requirement: 'Ubuntu 26.04（x86_64）',
+		available: true
 	}
 ];
 
@@ -57,6 +57,12 @@ const CHANNEL_LABELS: Record<Channel, string> = {
 
 /** CPU 架构，从安装包文件名里认（`-arm64.pkg` / `-x86_64.pkg`） */
 export type Arch = 'arm64' | 'x86_64';
+
+/** GitHub 下载不方便时的网盘地址（主仓库 CHANGELOG 那一节的「网盘：」行） */
+export type Mirror = {
+	name: string;
+	url: string;
+};
 
 /** 一个可下载的安装包 */
 export type Asset = {
@@ -81,16 +87,17 @@ export type Release = {
 	channel: Channel;
 	/** 更新日志，一条一句 */
 	notes: string[];
+	mirrors: Mirror[];
 	/** 打包时的提交哈希（40 位） */
 	commit: string;
 	/** 打包时间，ISO 格式，UTC */
 	builtAt: string;
 	assets: Asset[];
-	/** GitHub Release 的标签（macos-v0.1.1 / windows-v0.1.0-alpha.1 / 旧的 v0.1.0），从安装包地址里认 */
+	/** GitHub Release 的标签（0.1.4 起三个平台共用 v0.1.4；更早的是 macos-v0.1.3 / windows-v0.1.3），从安装包地址里认 */
 	tag: string;
 	/** GitHub Release 页面，看原文说明、校验和与构建信息 */
 	pageUrl: string;
-	/** 这一次发布覆盖的平台（一次发布只打一个平台，Release 按平台各发各的） */
+	/** 这条构建的平台：共用一个 GitHub Release 的多个平台在这里拆成各自一条，下游按平台取用不用区分新旧发布方式 */
 	platform: PlatformId | null;
 	/** 本地开发时从主仓库 CHANGELOG.md 合进来的未发布版本：没有安装包、日期为空，线上不会有 */
 	preview: boolean;
@@ -105,6 +112,7 @@ export type ReleaseGroup = {
 	date: string;
 	channel: Channel;
 	notes: string[];
+	mirrors: Mirror[];
 	/** 按平台顺序（macOS、Windows、Linux） */
 	builds: Release[];
 	/** 整组都是本地预览（见 Release.preview） */
@@ -116,7 +124,7 @@ export type ReleaseGroup = {
  * 版本从新到旧；页面上的「当前版本」取第一条。发新版本不用改这里。
  */
 export const releases: Release[] = feed.releases
-	.map((release) => {
+	.flatMap((release): Release[] => {
 		const assets: Asset[] = release.assets.flatMap((asset) =>
 			isPlatformId(asset.platform)
 				? [
@@ -134,19 +142,28 @@ export const releases: Release[] = feed.releases
 		);
 		const preview = (release as { preview?: boolean }).preview === true;
 		const tag = preview ? '' : (tagOfAssetUrl(assets[0]?.url) ?? `v${release.version}`);
-		return {
+		const mirrors = (release as { mirrors?: Mirror[] }).mirrors ?? [];
+		const base = {
 			version: release.version,
 			date: release.date,
 			channel: asChannel(release.channel),
 			notes: release.notes,
+			mirrors,
 			commit: release.commit,
 			builtAt: release.built_at,
-			assets,
 			tag,
 			pageUrl: preview ? '' : `https://github.com/${feed.repository}/releases/tag/${tag}`,
-			platform: assets[0]?.platform ?? null,
 			preview
 		};
+		const present = platforms
+			.map((p) => p.id)
+			.filter((id) => assets.some((a) => a.platform === id));
+		if (present.length === 0) return [{ ...base, assets, platform: null }];
+		return present.map((id) => ({
+			...base,
+			assets: assets.filter((a) => a.platform === id),
+			platform: id
+		}));
 	})
 	// 本地预览的未发布版本排最前，其余从新到旧按发布日期排，同一天的按版本号高的在前
 	.sort(
@@ -173,6 +190,7 @@ export const releaseGroups: ReleaseGroup[] = (() => {
 				date: release.date,
 				channel: release.channel,
 				notes: release.notes,
+				mirrors: release.mirrors,
 				builds: [release],
 				preview: release.preview
 			});
@@ -196,16 +214,17 @@ export const releaseGroups: ReleaseGroup[] = (() => {
 
 /**
  * 本地预览的版本还没有构建，按平台筛选时靠更新日志本身判断它属于谁：
- * 条目全带「Windows：」/「macOS：」前缀就只属于那些平台，有一条不带前缀就是两端共用。
+ * 条目全带「Windows：」/「macOS：」/「Linux：」前缀就只属于那些平台，有一条不带前缀就是各端共用。
  */
 export function previewPlatforms(notes: string[]): PlatformId[] {
 	const found = new Set<PlatformId>();
 	for (const note of splitContributors(notes).notes) {
 		if (/^Windows[：:]/.test(note)) found.add('windows');
 		else if (/^macOS[：:]/.test(note)) found.add('macos');
-		else if (!/^\*\*已知问题/.test(note)) return ['macos', 'windows'];
+		else if (/^Linux[：:]/.test(note)) found.add('linux');
+		else if (!/^\*\*已知问题/.test(note)) return ['macos', 'windows', 'linux'];
 	}
-	return found.size > 0 ? [...found] : ['macos', 'windows'];
+	return found.size > 0 ? [...found] : ['macos', 'windows', 'linux'];
 }
 
 /** 更新日志「本版社区贡献」行里的一个人：GitHub 用户名与贡献内容 */
@@ -277,7 +296,7 @@ export function latestFor(platform: PlatformId): Release | null {
 export const unsignedHints: Record<PlatformId, string> = {
 	macos: '测试版没有 Apple 开发者签名，首次打开要到「系统设置 → 隐私与安全性」点「仍要打开」。',
 	windows: '测试版没有代码签名，SmartScreen 拦截时点「更多信息 → 仍要运行」。',
-	linux: ''
+	linux: '解压后运行 install.sh 装到用户目录；其他发行版请按安装说明从源码安装。'
 };
 
 /**

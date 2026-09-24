@@ -10,7 +10,7 @@
 	const platforms = [
 		{ name: 'macOS', api: 'Input Method Kit（IMK）', status: '已可用，测试版' },
 		{ name: 'Windows', api: 'Text Services Framework（TSF）', status: '已可用，内测版' },
-		{ name: 'Linux', api: 'IBus / Fcitx', status: '计划中' }
+		{ name: 'Linux', api: 'Fcitx5', status: '已可用，测试版' }
 	];
 
 	/** 随包数据的来源与许可，与偏好设置「关于」页的清单一致 */

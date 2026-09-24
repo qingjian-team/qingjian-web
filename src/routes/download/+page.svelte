@@ -30,6 +30,7 @@
 		unsignedHints,
 		type Arch,
 		type PlatformId,
+		type Release,
 		type ReleaseGroup
 	} from '$lib/releases';
 
@@ -69,6 +70,17 @@
 		return platforms.find((p) => p.id === id)?.name ?? id ?? '';
 	}
 
+	/** 版本卡片里的构建行：共用一个 GitHub Release 的几个平台合成一行（0.1.4 起），更早按平台分开发的各占一行 */
+	function releaseLines(builds: Release[]) {
+		const lines: { build: Release; names: string }[] = [];
+		for (const build of builds) {
+			const same = lines.find((line) => build.tag && line.build.tag === build.tag);
+			if (same) same.names += ` / ${platformName(build.platform)}`;
+			else lines.push({ build, names: platformName(build.platform) });
+		}
+		return lines;
+	}
+
 	/** 「全部版本」的标签页：全部，或只看某个发过版本的平台 */
 	let tab = $state<'all' | PlatformId>('all');
 	const tabs = $derived([
@@ -92,14 +104,14 @@
 <Seo
 	title="下载"
 	description={downloadsOpen
-		? `下载青简输入法 macOS 版 ${latest.version} 与 Windows 内测版（需要 macOS 13 或 64 位 Windows 11），查看更新日志与全部版本。Linux 版计划中。`
+		? `下载青简输入法 macOS 版 ${latest.version}、Windows 内测版与 Linux 测试版（需要 macOS 13、64 位 Windows 11 或 Ubuntu 26.04），查看更新日志与全部版本。`
 		: `青简输入法 macOS 版 ${latest.version} 测试版即将开放下载（需要 macOS 13 或更新），先看看这一版有什么。Windows 与 Linux 版计划中。`}
 />
 
 <Subpage
 	title={downloadsOpen ? '下载青简。' : '快好了。'}
 	desc={downloadsOpen
-		? 'macOS 版与 Windows 版都在测试阶段。Linux 版在计划中。'
+		? 'macOS、Windows 与 Linux 版都在测试阶段。'
 		: 'macOS 测试版作者自己每天在用，正在给少数测试者打包；等 Apple 开发者签名办下来就在这里公开下载。Windows 与 Linux 版在计划中。'}
 >
 	<!-- 顶部：当前版本 + 主下载按钮 + 这一版的更新日志 -->
@@ -145,9 +157,23 @@
 						>。
 					</p>
 				{:else if heroAsset}
-					<Button href={heroAsset.url} download class="w-fit">
-						下载 {heroPlatform.name} 版（{heroAsset.arch}） <DownloadSimpleIcon size={18} />
-					</Button>
+					<div class="flex flex-wrap items-center gap-2.5">
+						<Button href={heroAsset.url} download class="w-fit">
+							下载 {heroPlatform.name} 版（{heroAsset.arch}） <DownloadSimpleIcon size={18} />
+						</Button>
+						<!-- GitHub 下载慢时的网盘，同一版本各平台共用一个地址 -->
+						{#each heroRelease.mirrors as mirror (mirror.url)}
+							<Button
+								href={mirror.url}
+								variant="outline"
+								target="_blank"
+								rel="noopener"
+								class="w-fit"
+							>
+								{mirror.name}下载 <ArrowSquareOutIcon size={16} />
+							</Button>
+						{/each}
+					</div>
 					<p class="text-[12px] leading-[1.7] text-muted">
 						{heroPlatform.requirement}，{formatSize(
 							heroAsset.size
@@ -232,10 +258,7 @@
 
 	<!-- 全部版本：下载没开放时不列（全是「暂无」的表格没有信息量） -->
 	<section id="releases" class="scroll-mt-3" hidden={!downloadsOpen}>
-		<SectionHeading
-			title="全部版本"
-			desc="按发布日期从新到旧。各平台版本号独立，同一个版本号的合在一条里。"
-		/>
+		<SectionHeading title="全部版本" desc="按发布日期从新到旧，同一个版本号的各平台合在一条里。" />
 		<div class="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="按平台筛选">
 			{#each tabs as item (item.id)}
 				<button
@@ -265,9 +288,9 @@
 					</header>
 					<!-- 每个平台一行：提交、构建时间、GitHub Release；同版本号多平台时叠着列。本地预览的版本还没有构建 -->
 					<ul class="mt-1 flex flex-col gap-0.5 text-[12px] text-muted" hidden={group.preview}>
-						{#each group.builds as build (build.tag || build.version)}
+						{#each releaseLines(group.builds) as { build, names } ((build.tag || build.version) + build.platform)}
 							<li class="flex flex-wrap items-center gap-x-2">
-								<strong class="font-medium text-ink">{platformName(build.platform)}</strong>
+								<strong class="font-medium text-ink">{names}</strong>
 								{#if build.commit}<span>· 提交 <code>{shortCommit(build.commit)}</code></span>{/if}
 								{#if build.builtAt}<span>· 构建于 {formatBuiltAt(build.builtAt)}</span>{/if}
 								<span>·</span>
@@ -284,6 +307,21 @@
 							</li>
 						{/each}
 					</ul>
+					{#if group.mirrors.length > 0 && !group.preview}
+						<p class="mt-1 flex flex-wrap items-center gap-x-2 text-[12px] text-muted">
+							GitHub 下载慢可以用网盘：
+							<!-- eslint-disable svelte/no-navigation-without-resolve -- 外部链接 -->
+							{#each group.mirrors as mirror (mirror.url)}
+								<a
+									class="inline-flex items-center gap-1 text-teal hover:underline"
+									href={mirror.url}
+									target="_blank"
+									rel="noopener">{mirror.name} <ArrowSquareOutIcon size={13} /></a
+								>
+							{/each}
+							<!-- eslint-enable svelte/no-navigation-without-resolve -->
+						</p>
+					{/if}
 
 					{#if group.builds.includes(heroRelease)}
 						<p class="mt-2 text-[12px] text-muted">当前版本，更新日志见页首。</p>
