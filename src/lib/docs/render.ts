@@ -192,24 +192,25 @@ export function rewriteLink(href: string, currentDir: string): string {
 	return hash ? `${target}#${hash}` : target;
 }
 
-/** 相对路径的图片改到同步脚本放静态文件的地方 */
-export function rewriteImage(src: string, currentDir: string): string {
+/** 相对路径的图片改到同步脚本放静态文件的地方（文档是 /docs-assets，主题 README 是 /themes-assets/<id>） */
+export function rewriteImage(src: string, currentDir: string, assetBase = '/docs-assets'): string {
 	if (/^(https?:|data:|\/)/.test(src)) return src;
 	const segments = currentDir ? currentDir.split('/') : [];
 	for (const part of src.split('/')) {
 		if (part === '..') segments.pop();
 		else if (part !== '.' && part !== '') segments.push(part);
 	}
-	return `/docs-assets/${segments.join('/')}`;
+	return `${assetBase}/${segments.join('/')}`;
 }
 
 /**
- * 渲染一页 Markdown。`currentDir` 是这页所在的目录（'' 是根），相对链接据此解析。
+ * 渲染一页 Markdown。`currentDir` 是这页所在的目录（'' 是根），相对链接据此解析；`assetBase` 见 {@link rewriteImage}。
  * 返回 HTML 与二级标题目录。
  */
 export function renderMarkdown(
 	markdown: string,
-	currentDir: string
+	currentDir: string,
+	assetBase?: string
 ): { html: string; toc: TocEntry[] } {
 	const toc: TocEntry[] = [];
 	const marked = new Marked({
@@ -242,7 +243,7 @@ export function renderMarkdown(
 				return `<a ${attrs}>${this.parser.parseInline(tokens)}</a>`;
 			},
 			image({ href, title, text }) {
-				const src = rewriteImage(href, currentDir);
+				const src = rewriteImage(href, currentDir, assetBase);
 				return `<img src="${src}" alt="${escapeHtml(text)}"${title ? ` title="${escapeHtml(title)}"` : ''} loading="lazy" />`;
 			},
 			table(token) {

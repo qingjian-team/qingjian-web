@@ -3,9 +3,11 @@
 
 	/**
 	 * 每页的搜索引擎与分享卡片信息。站点级的（站名、图片、结构化数据）在 +layout.svelte 里，
-	 * 这里只放随页面变的：标题、描述、规范地址。标题格式「页名 | 青简输入法 Qingjian」，首页不带页名。
+	 * 这里只放随页面变的：标题、描述、规范地址、分享卡片图（缺省是横版 logo，主题详情页换成主题封面）。
+	 * 标题格式「页名 | 青简输入法 Qingjian」，首页不带页名。
 	 */
-	let { title, description }: { title?: string; description: string } = $props();
+	let { title, description, image }: { title?: string; description: string; image?: string } =
+		$props();
 
 	const SITE = 'https://qingjian.app';
 	const BRAND = '青简输入法 Qingjian';
@@ -13,6 +15,7 @@
 	const fullTitle = $derived(
 		title ? `${title} | ${BRAND}` : `${BRAND} | 打字时顺便多认识一个外语词`
 	);
+	const imageUrl = $derived(`${SITE}${image ?? '/brand/qingjian-logo-horizontal.png'}`);
 	const canonical = $derived(`${SITE}${page.url.pathname === '/' ? '/' : page.url.pathname}`);
 </script>
 
@@ -28,4 +31,6 @@
 
 	<meta name="twitter:title" content={fullTitle} />
 	<meta name="twitter:description" content={description} />
+	<meta property="og:image" content={imageUrl} />
+	<meta name="twitter:image" content={imageUrl} />
 </svelte:head>

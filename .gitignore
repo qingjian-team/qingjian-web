@@ -8,6 +8,10 @@ node_modules
 /src/content/releases.json
 /static/releases.json
 /static/releases.json.sig
+# 主题仓库的同步产物（scripts/sync-themes.mjs）
+/src/content/themes.json
+/src/content/themes
+/static/themes-assets
 .output
 .vercel
 .netlify

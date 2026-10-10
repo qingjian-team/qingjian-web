@@ -41,12 +41,10 @@
 </script>
 
 <svelte:head>
-	<!-- 站点级：站名、语言、分享卡片图；每页的标题 / 描述 / 规范地址在 Seo 组件里 -->
+	<!-- 站点级：站名、语言；每页的标题 / 描述 / 规范地址 / 分享卡片图在 Seo 组件里 -->
 	<meta property="og:site_name" content="青简 Qingjian" />
 	<meta property="og:locale" content="zh_CN" />
-	<meta property="og:image" content="https://qingjian.app/brand/qingjian-logo-horizontal.png" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:image" content="https://qingjian.app/brand/qingjian-logo-horizontal.png" />
 	<meta
 		name="keywords"
 		content="青简, Qingjian, 输入法, 拼音输入法, macOS 输入法, Rust 输入法, 学英语, 学日语, 双拼, 整句输入, 本地输入法"

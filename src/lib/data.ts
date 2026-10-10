@@ -23,6 +23,7 @@ export type Entry = {
 export const navLinks = [
 	{ label: '首页', path: '/' },
 	{ label: '文档', path: '/docs' },
+	{ label: '主题', path: '/themes' },
 	{ label: '下载', path: '/download' },
 	{ label: '隐私', path: '/privacy' },
 	{ label: '关于', path: '/about' }
