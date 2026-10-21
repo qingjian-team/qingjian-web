@@ -7,6 +7,7 @@
 	import Seo from '$lib/components/Seo.svelte';
 	import { localized } from '$lib/i18n';
 	import { m } from '$lib/paraglide/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
 	import '$lib/docs/doc.css';
 
 	let { data } = $props();
@@ -67,6 +68,8 @@
 <Seo
 	title={data.slug ? data.meta.title : m.docs_title()}
 	description={data.meta.description || m.docs_seo_desc({ title: data.meta.title })}
+	translations={data.translations}
+	contentLocale={data.contentLocale}
 />
 
 <div class="wrap min-h-[65vh] py-[30px] pb-[45px] desk:py-[50px] desk:pb-20">
@@ -139,7 +142,16 @@
 		</nav>
 
 		<!-- 中：正文。只画页名，不画上面的分组名（侧栏已经高亮） -->
-		<article class="min-w-0 wide:col-start-2 wide:row-start-1" lang="zh-Hans">
+		<article class="min-w-0 wide:col-start-2 wide:row-start-1" lang={data.contentLocale}>
+			{#if data.contentLocale !== getLocale()}
+				<!-- 这一页还没有当前语言的译本，正文是替补的英文版或中文原文 -->
+				<p
+					class="mb-4 rounded-[12px] border border-[#ecdcbf] bg-[#fff8ec] px-4 py-2.5 text-[13px] text-[#8a5a14]"
+					lang={getLocale()}
+				>
+					{data.contentLocale === 'en' ? m.docs_untranslated_en() : m.docs_untranslated()}
+				</p>
+			{/if}
 			<h1 class="mb-2 font-song text-[28px] leading-[1.4] font-bold desk:text-[32px]">
 				{data.meta.title}
 			</h1>

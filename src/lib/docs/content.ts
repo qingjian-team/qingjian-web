@@ -1,8 +1,10 @@
+import { baseLocale, locales, type Locale } from '$lib/i18n';
 import { parseFrontmatter, type DocMeta } from './frontmatter';
 
 /**
  * 文档内容层：把 `scripts/sync-docs.mjs` 同步来的 src/content/docs/**\/*.md 组织成
  * 「首页 + 分组 + 页」的树。目录结构就是站点结构，只支持一层分组（与主仓库 docs/user/README.md 的约定一致）。
+ * 中文原文在根下，各语言译本在 i18n/<语言>/ 下、目录结构与原文一一对应；某页没有译本时按 fallbackChain 找替补。
  * 只在服务端（预渲染时）用，Markdown 原文不进客户端包。
  */
 
@@ -17,6 +19,9 @@ export type DocPage = {
 
 	/** 去掉 frontmatter 的 Markdown 正文 */
 	body: string;
+
+	/** 这一页实际是哪种语言：有译本就是请求的语言，回退时是替补的语言（英文或中文） */
+	locale: Locale;
 };
 
 export type DocGroup = {
@@ -39,15 +44,47 @@ const sources = import.meta.glob('/src/content/docs/**/*.md', {
 const byOrder = (a: { meta: DocMeta }, b: { meta: DocMeta }) =>
 	a.meta.order - b.meta.order || a.meta.title.localeCompare(b.meta.title, 'zh');
 
-function build() {
-	const pages = new Map<string, DocPage>();
-	for (const [file, source] of Object.entries(sources)) {
-		const relative = file.slice(PREFIX.length).replace(/\.md$/, '');
-		const slug = relative === 'index' ? '' : relative.replace(/\/index$/, '');
-		const group = slug.includes('/') ? slug.slice(0, slug.indexOf('/')) : slug;
-		const { meta, body } = parseFrontmatter(source);
-		pages.set(slug, { slug, group, meta, body });
+/** 文件路径 → [语言, slug]；i18n/<语言>/ 下的是译本，其余是中文原文 */
+function locate(file: string): [Locale, string] | null {
+	let relative = file.slice(PREFIX.length).replace(/\.md$/, '');
+	let locale: Locale = baseLocale;
+	const translated = /^i18n\/([^/]+)\/(.+)$/.exec(relative);
+	if (translated) {
+		if (!(locales as readonly string[]).includes(translated[1])) return null;
+		locale = translated[1] as Locale;
+		relative = translated[2];
 	}
+	const slug = relative === 'index' ? '' : relative.replace(/\/index$/, '');
+	return [locale, slug];
+}
+
+/** 各语言各页的原始内容：pagesBy[语言][slug] */
+const pagesBy = new Map<Locale, Map<string, DocPage>>(locales.map((l) => [l, new Map()]));
+for (const [file, source] of Object.entries(sources)) {
+	const located = locate(file);
+	if (!located) continue;
+	const [locale, slug] = located;
+	const group = slug.includes('/') ? slug.slice(0, slug.indexOf('/')) : slug;
+	const { meta, body } = parseFrontmatter(source);
+	pagesBy.get(locale)!.set(slug, { slug, group, meta, body, locale });
+}
+
+/**
+ * 没有译本时按什么顺序找替补：繁体看简体原文；其余外语先看英文版（读外语的人多半读得懂英文、读不懂中文），
+ * 英文也没有再看中文原文。
+ */
+export function fallbackChain(locale: Locale): Locale[] {
+	if (locale === baseLocale || locale === 'zh-Hant' || locale === 'en')
+		return [...new Set<Locale>([locale, baseLocale])];
+	return [locale, 'en', baseLocale];
+}
+
+/** 一种语言的文档树：页面集合以中文原文为准（译本里多出来的页不算），每页取替补顺序里第一个有的版本 */
+function build(locale: Locale) {
+	const base = pagesBy.get(baseLocale)!;
+	const chain = fallbackChain(locale).map((l) => pagesBy.get(l)!);
+	const pages = new Map<string, DocPage>();
+	for (const slug of base.keys()) pages.set(slug, chain.find((m) => m.has(slug))!.get(slug)!);
 
 	const home = pages.get('') ?? null;
 	const groups: DocGroup[] = [...pages.values()]
@@ -70,38 +107,50 @@ function build() {
 		sequence.push(...group.pages);
 	}
 
-	return { pages, home, groups, sequence };
+	const navigation = groups.map((group) => ({
+		slug: group.slug,
+		title: group.meta.title,
+		pages: group.pages.map((page) => ({ slug: page.slug, title: page.meta.title }))
+	}));
+
+	return { pages, groups, sequence, navigation };
 }
 
-const tree = build();
+const trees = new Map(locales.map((locale) => [locale, build(locale)]));
+const tree = (locale: Locale) => trees.get(locale)!;
 
 /** 侧栏用的导航树 */
-export const navigation = tree.groups.map((group) => ({
-	slug: group.slug,
-	title: group.meta.title,
-	pages: group.pages.map((page) => ({ slug: page.slug, title: page.meta.title }))
-}));
-
-export const home = tree.home;
-
-export function findPage(slug: string): DocPage | null {
-	return tree.pages.get(slug) ?? null;
+export function navigation(locale: Locale) {
+	return tree(locale).navigation;
 }
 
-export function findGroup(slug: string): DocGroup | null {
-	return tree.groups.find((group) => group.slug === slug) ?? null;
+export function findPage(slug: string, locale: Locale = baseLocale): DocPage | null {
+	return tree(locale).pages.get(slug) ?? null;
 }
 
-/** 所有页的 slug，预渲染入口用 */
+export function findGroup(slug: string, locale: Locale = baseLocale): DocGroup | null {
+	return tree(locale).groups.find((group) => group.slug === slug) ?? null;
+}
+
+/** 所有页的 slug，预渲染入口用（各语言的页面集合相同） */
 export function allSlugs(): string[] {
-	return tree.sequence.map((page) => page.slug);
+	return tree(baseLocale).sequence.map((page) => page.slug);
+}
+
+/** 这一页有译本的语言（含中文原文），给 hreflang 与站点地图用 */
+export function translatedLocales(slug: string): Locale[] {
+	return locales.filter((locale) => pagesBy.get(locale)!.has(slug));
 }
 
 /** 阅读顺序里的前后页 */
-export function neighbors(slug: string): { previous: DocPage | null; next: DocPage | null } {
-	const index = tree.sequence.findIndex((page) => page.slug === slug);
+export function neighbors(
+	slug: string,
+	locale: Locale = baseLocale
+): { previous: DocPage | null; next: DocPage | null } {
+	const { sequence } = tree(locale);
+	const index = sequence.findIndex((page) => page.slug === slug);
 	return {
-		previous: index > 0 ? tree.sequence[index - 1] : null,
-		next: index >= 0 && index < tree.sequence.length - 1 ? tree.sequence[index + 1] : null
+		previous: index > 0 ? sequence[index - 1] : null,
+		next: index >= 0 && index < sequence.length - 1 ? sequence[index + 1] : null
 	};
 }

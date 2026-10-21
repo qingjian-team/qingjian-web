@@ -13,7 +13,7 @@
 //   QINGJIAN_DOCS_TOKEN  只读令牌，仅在主仓库私有时需要（现在公开，留空即可）
 //
 // 产物（都在 .gitignore 里）：
-//   src/content/docs/     所有 .md，目录结构原样
+//   src/content/docs/     所有 .md，目录结构原样（各语言译本在 i18n/<语言>/ 下）
 //   static/docs-assets/   .md 以外的文件（图片等），页面里相对路径的图片会改写到 /docs-assets/<同样的相对路径>
 
 import {
@@ -110,7 +110,7 @@ function cloneDocs() {
 	return { path, cleanup: () => rmSync(tmp, { recursive: true, force: true }) };
 }
 
-/** 递归拷贝：.md 进 content，其余进 assets；README.md 是维护约定不渲染 */
+/** 递归拷贝：.md 进 content，其余进 assets；README.md（根下的与 i18n/ 下的）是维护约定不渲染 */
 function copyTree(source) {
 	rmSync(CONTENT_DIR, { recursive: true, force: true });
 	rmSync(ASSETS_DIR, { recursive: true, force: true });
@@ -123,7 +123,7 @@ function copyTree(source) {
 			if (statSync(full).isDirectory()) {
 				walk(full);
 			} else if (name.endsWith('.md')) {
-				if (rel === 'README.md') continue;
+				if (name === 'README.md') continue;
 				const target = join(CONTENT_DIR, rel);
 				mkdirSync(dirname(target), { recursive: true });
 				cpSync(full, target);

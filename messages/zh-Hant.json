@@ -335,5 +335,7 @@
 	"docs_expand": "展開",
 	"docs_previous": "上一頁",
 	"docs_next": "下一頁",
-	"docs_on_this_page": "本頁內容"
+	"docs_on_this_page": "本頁內容",
+	"docs_untranslated": "這一頁還沒有翻譯，以下是簡體中文原文。",
+	"docs_untranslated_en": "這一頁還沒有翻譯，以下是英文版。"
 }

@@ -335,5 +335,7 @@
 	"docs_expand": "Ausklappen",
 	"docs_previous": "Zurück",
 	"docs_next": "Weiter",
-	"docs_on_this_page": "Auf dieser Seite"
+	"docs_on_this_page": "Auf dieser Seite",
+	"docs_untranslated": "Diese Seite ist noch nicht übersetzt. Unten steht das chinesische Original.",
+	"docs_untranslated_en": "Diese Seite ist noch nicht übersetzt. Unten steht die englische Fassung."
 }

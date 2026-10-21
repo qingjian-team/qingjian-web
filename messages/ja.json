@@ -335,5 +335,7 @@
 	"docs_expand": "展開する",
 	"docs_previous": "前のページ",
 	"docs_next": "次のページ",
-	"docs_on_this_page": "このページ"
+	"docs_on_this_page": "このページ",
+	"docs_untranslated": "このページはまだ翻訳されていません。以下は中国語の原文です。",
+	"docs_untranslated_en": "このページはまだ翻訳されていません。以下は英語版です。"
 }

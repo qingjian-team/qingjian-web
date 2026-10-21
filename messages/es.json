@@ -335,5 +335,7 @@
 	"docs_expand": "Expandir",
 	"docs_previous": "Anterior",
 	"docs_next": "Siguiente",
-	"docs_on_this_page": "En esta página"
+	"docs_on_this_page": "En esta página",
+	"docs_untranslated": "Esta página aún no está traducida. A continuación se muestra el original en chino.",
+	"docs_untranslated_en": "Esta página aún no está traducida. A continuación se muestra la versión en inglés."
 }

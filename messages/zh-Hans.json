@@ -335,5 +335,7 @@
 	"docs_expand": "展开",
 	"docs_previous": "上一页",
 	"docs_next": "下一页",
-	"docs_on_this_page": "本页"
+	"docs_on_this_page": "本页",
+	"docs_untranslated": "这一页还没有翻译，下面是中文原文。",
+	"docs_untranslated_en": "这一页还没有翻译，下面是英文版。"
 }

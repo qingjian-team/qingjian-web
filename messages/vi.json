@@ -335,5 +335,7 @@
 	"docs_expand": "Mở rộng",
 	"docs_previous": "Trang trước",
 	"docs_next": "Trang sau",
-	"docs_on_this_page": "Trong trang này"
+	"docs_on_this_page": "Trong trang này",
+	"docs_untranslated": "Trang này chưa được dịch. Dưới đây là bản gốc tiếng Trung.",
+	"docs_untranslated_en": "Trang này chưa được dịch. Dưới đây là bản tiếng Anh."
 }
