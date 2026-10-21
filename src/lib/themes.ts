@@ -1,3 +1,4 @@
+import { m } from '$lib/paraglide/messages';
 import index from '../content/themes.json';
 
 /**
@@ -67,15 +68,15 @@ export function themeReadme(id: string): string {
 
 /** 截图的说明文字 */
 export function screenshotLabel(name: string): string {
-	if (name === 'vertical.png') return '竖排';
-	if (name === 'horizontal.png') return '横排';
-	if (name === 'vertical-dark.png') return '深色 · 竖排';
+	if (name === 'vertical.png') return m.shot_vertical();
+	if (name === 'horizontal.png') return m.shot_horizontal();
+	if (name === 'vertical-dark.png') return m.shot_vertical_dark();
 	return name.replace(/^\d{2}-/, '').replace(/\.png$/, '');
 }
 
 /** 外观的说明文字 */
 export function appearanceLabel(appearance: ThemeEntry['appearance']): string {
-	if (appearance === 'light') return '只有浅色';
-	if (appearance === 'dark') return '只有深色';
-	return '浅色与深色';
+	if (appearance === 'light') return m.appearance_light();
+	if (appearance === 'dark') return m.appearance_dark();
+	return m.appearance_both();
 }

@@ -35,3 +35,6 @@ vite.config.ts.timestamp-*
 
 # Playwright MCP
 .playwright-mcp
+
+# Paraglide 编译产物（project.inlang + messages/ 生成）
+/src/lib/paraglide

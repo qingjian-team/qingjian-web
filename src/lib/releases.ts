@@ -1,7 +1,8 @@
 import AppleLogoIcon from 'phosphor-svelte/lib/AppleLogoIcon';
 import LinuxLogoIcon from 'phosphor-svelte/lib/LinuxLogoIcon';
 import WindowsLogoIcon from 'phosphor-svelte/lib/WindowsLogoIcon';
-import type { PhosphorIcon } from '$lib/data';
+import type { PhosphorIcon, Text } from '$lib/data';
+import { m } from '$lib/paraglide/messages';
 import feed from '../content/releases.json';
 
 export type PlatformId = 'macos' | 'windows' | 'linux';
@@ -14,7 +15,7 @@ export type Platform = {
 	/** 系统接入的输入法框架 */
 	api: string;
 	/** 最低系统要求；计划中的平台留空 */
-	requirement: string;
+	requirement: Text;
 	available: boolean;
 };
 
@@ -23,16 +24,16 @@ export const platforms: Platform[] = [
 		id: 'macos',
 		name: 'macOS',
 		icon: AppleLogoIcon,
-		api: 'Input Method Kit（IMK）',
-		requirement: 'macOS 13 或更新',
+		api: 'Input Method Kit (IMK)',
+		requirement: m.platform_req_macos,
 		available: true
 	},
 	{
 		id: 'windows',
 		name: 'Windows',
 		icon: WindowsLogoIcon,
-		api: 'Text Services Framework（TSF）',
-		requirement: '64 位 Windows 11',
+		api: 'Text Services Framework (TSF)',
+		requirement: m.platform_req_windows,
 		available: true
 	},
 	{
@@ -40,7 +41,7 @@ export const platforms: Platform[] = [
 		name: 'Linux',
 		icon: LinuxLogoIcon,
 		api: 'Fcitx5',
-		requirement: 'Ubuntu 26.04（x86_64）',
+		requirement: m.platform_req_linux,
 		available: true
 	}
 ];
@@ -48,11 +49,11 @@ export const platforms: Platform[] = [
 /** 发布渠道，与主仓库 CHANGELOG.md 标题里的写法一致 */
 export type Channel = 'alpha' | 'beta' | 'rc' | 'stable';
 
-const CHANNEL_LABELS: Record<Channel, string> = {
-	alpha: '内测版',
-	beta: '测试版',
-	rc: '候选版',
-	stable: '正式版'
+const CHANNEL_LABELS: Record<Channel, Text> = {
+	alpha: m.channel_alpha,
+	beta: m.channel_beta,
+	rc: m.channel_rc,
+	stable: m.channel_stable
 };
 
 /** CPU 架构，从安装包文件名里认（`-arm64.pkg` / `-x86_64.pkg`） */
@@ -293,10 +294,10 @@ export function latestFor(platform: PlatformId): Release | null {
 }
 
 /** 首次打开没有正式签名时的放行方法，按平台 */
-export const unsignedHints: Record<PlatformId, string> = {
-	macos: '测试版没有 Apple 开发者签名，首次打开要到「系统设置 → 隐私与安全性」点「仍要打开」。',
-	windows: '测试版没有代码签名，SmartScreen 拦截时点「更多信息 → 仍要运行」。',
-	linux: '解压后运行 install.sh 装到用户目录；其他发行版请按安装说明从源码安装。'
+export const unsignedHints: Record<PlatformId, Text> = {
+	macos: m.unsigned_macos,
+	windows: m.unsigned_windows,
+	linux: m.unsigned_linux
 };
 
 /**
@@ -306,7 +307,7 @@ export const unsignedHints: Record<PlatformId, string> = {
 export const downloadsOpen = true;
 
 export function channelLabel(channel: Channel): string {
-	return CHANNEL_LABELS[channel];
+	return CHANNEL_LABELS[channel]();
 }
 
 /** 提交哈希前 7 位 */

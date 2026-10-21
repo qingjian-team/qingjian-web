@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { allSlugs, findGroup, findPage, navigation, neighbors } from '$lib/docs/content';
 import { renderMarkdown } from '$lib/docs/render';
+import { localized } from '$lib/i18n';
 import type { EntryGenerator, PageServerLoad } from './$types';
 
 /** 文档全部预渲染成静态页：Markdown 与渲染器只在构建时跑，线上不动 */
@@ -14,7 +15,13 @@ export const load: PageServerLoad = ({ params }) => {
 	if (!page) error(404, '没有这一页文档');
 
 	const currentDir = slug.includes('/') ? slug.slice(0, slug.lastIndexOf('/')) : slug;
-	const { html, toc } = renderMarkdown(page.body, page.slug === page.group ? slug : currentDir);
+	const rendered = renderMarkdown(page.body, page.slug === page.group ? slug : currentDir);
+	// 正文里的站内链接跟着当前语言走，读英文版的人点进别的文档页还是英文版
+	const prefix = localized('/').replace(/\/$/, '');
+	const html = prefix
+		? rendered.html.replaceAll('href="/docs', `href="${prefix}/docs`)
+		: rendered.html;
+	const { toc } = rendered;
 	const group = slug ? findGroup(page.group) : null;
 	const { previous, next } = neighbors(slug);
 	const brief = (item: typeof previous) =>

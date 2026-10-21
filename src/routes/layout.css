@@ -6,6 +6,8 @@
 		Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 	/* 中文衬线（标题、品牌字） */
 	--font-song: 'Songti SC', 'STSong', 'Noto Serif CJK SC', serif;
+	/* 品牌字「青简」：任何语言的页面都用宋体 */
+	--font-brand: 'Songti SC', 'STSong', 'Noto Serif CJK SC', serif;
 	/* 楷体（手写体点缀） */
 	--font-kai: 'STKaiti', 'Kaiti SC', serif;
 	--font-georgia: Georgia, serif;
@@ -23,6 +25,44 @@
 
 	--animate-bamboo: bamboo-breathe 13s ease-in-out infinite alternate;
 	--animate-caret: caret-blink 1s steps(1) infinite;
+}
+
+/*
+ * 各语言页面的字体。缺省那套以简体中文为准，别的语言要换：
+ * 西文页面（英西越德）正文先用西文字体，不然没装 Inter 时弯引号这类标点会落到中文字体上、显示成全角；
+ * 标题与手写点缀换成西文衬线，宋体、楷体缺越南语等带附加符号的字母，会一个词里混两种字体。
+ * 日文与繁体页面换成各自的字体，汉字才是日本 / 台湾的字形。
+ */
+:root:not(:lang(zh)):not(:lang(ja)) {
+	--font-sans:
+		Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+		'PingFang SC', 'Microsoft YaHei', sans-serif;
+	--font-song: Georgia, 'Times New Roman', serif;
+	--font-kai: Georgia, 'Times New Roman', serif;
+}
+
+:root:lang(ja) {
+	--font-sans:
+		Inter, -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+		'Yu Gothic UI', 'Yu Gothic', Meiryo, sans-serif;
+	--font-song: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', serif;
+	--font-kai: 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+}
+
+/* 别的语言页面里嵌着的中文原文（还没翻译的文档正文、更新日志）换回中文字体 */
+:not(:root)[lang='zh-Hans'] {
+	--font-sans:
+		Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+	--font-song: 'Songti SC', 'STSong', 'Noto Serif CJK SC', serif;
+	--font-kai: 'STKaiti', 'Kaiti SC', serif;
+	font-family: var(--font-sans);
+}
+
+:root:lang(zh-Hant) {
+	--font-sans:
+		Inter, -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+	--font-song: 'Songti TC', 'Noto Serif CJK TC', 'PMingLiU', serif;
+	--font-kai: 'Kaiti TC', 'DFKai-SB', serif;
 }
 
 /* 竹影随风摆动 */

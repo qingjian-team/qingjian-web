@@ -6,6 +6,8 @@
 	import Brand from './Brand.svelte';
 	import NavLink from './NavLink.svelte';
 	import { isCurrentPath, navLinks } from '$lib/data';
+	import { localized, plainPath } from '$lib/i18n';
+	import { m } from '$lib/paraglide/messages';
 	import { ui } from '$lib/ui.svelte';
 
 	/** 站点上线于 2026 年，跨年后显示为区间 */
@@ -26,24 +28,24 @@
 		<div>
 			<Brand />
 			<p class="mt-4 max-w-[280px] text-[13px] leading-[1.7] text-muted">
-				输入的时候，顺便多认识一个词。
+				{m.footer_tagline()}
 			</p>
 			<span class="mt-3 inline-block text-[11px] tracking-[.5px] text-[#9aa5b1]">
-				用 Rust 写的拼音输入法 · macOS 测试版 · Windows 内测版
+				{m.footer_meta()}
 			</span>
 		</div>
 
 		<nav aria-labelledby="footer-site">
 			<h2 id="footer-site" class="text-[11px] font-semibold tracking-[1.5px] text-[#18324b]">
-				站点
+				{m.footer_site()}
 			</h2>
 			<ul class="mt-4 flex flex-col gap-2.5">
 				{#each navLinks as link (link.path)}
 					<li class="text-[13px] text-muted">
 						<NavLink
-							href={resolve(link.path)}
-							label={link.label}
-							current={isCurrentPath(page.url.pathname, link.path)}
+							href={localized(resolve(link.path))}
+							label={link.label()}
+							current={isCurrentPath(plainPath(page.url), link.path)}
 							orientation="vertical"
 						/>
 					</li>
@@ -53,7 +55,7 @@
 
 		<nav aria-labelledby="footer-community">
 			<h2 id="footer-community" class="text-[11px] font-semibold tracking-[1.5px] text-[#18324b]">
-				社区
+				{m.footer_community()}
 			</h2>
 			<ul class="mt-4 flex flex-col gap-2.5">
 				{#each community as item (item.href)}
@@ -86,7 +88,7 @@
 		</span>
 
 		<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
-			<span class="font-song tracking-[.5px]">不积跬步，无以至千里。</span>
+			<span class="font-song tracking-[.5px]">{m.footer_motto()}</span>
 			<button
 				class="inline-flex items-center gap-[5px] text-[#6a856a] transition-colors hover:text-teal disabled:cursor-default disabled:text-[#8b95a4]"
 				onclick={() => (ui.wind = !ui.wind)}
@@ -94,7 +96,11 @@
 				aria-pressed={ui.animate}
 			>
 				<LeafIcon size={13} />
-				{ui.reducedMotion ? '静态竹影' : ui.wind ? '暂停风动' : '开启风动'}
+				{ui.reducedMotion
+					? m.footer_wind_static()
+					: ui.wind
+						? m.footer_wind_pause()
+						: m.footer_wind_play()}
 			</button>
 		</div>
 	</div>

@@ -11,6 +11,9 @@
 	import SectionHeading from '$lib/components/SectionHeading.svelte';
 	import Subpage from '$lib/components/Subpage.svelte';
 	import { renderInline } from '$lib/docs/render';
+	import { localized } from '$lib/i18n';
+	import { m } from '$lib/paraglide/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
 	import {
 		channelLabel,
 		detectArch,
@@ -84,7 +87,7 @@
 	/** 「全部版本」的标签页：全部，或只看某个发过版本的平台 */
 	let tab = $state<'all' | PlatformId>('all');
 	const tabs = $derived([
-		{ id: 'all' as const, name: '全部' },
+		{ id: 'all' as const, name: m.dl_tab_all() },
 		...releasedPlatforms.map((p) => ({ id: p.id, name: p.name }))
 	]);
 	/** 按标签页过滤：只看某平台时，只留有该平台构建的版本，且每条只显示那个平台的构建 */
@@ -99,20 +102,23 @@
 							g.builds.length > 0 || (g.preview && previewPlatforms(g.notes).some((p) => p === tab))
 					)
 	);
+
+	/** 更新日志来自主仓库的 CHANGELOG，只有中文；其他语言的页面在日志上方说一句 */
+	const notesInChinese = getLocale() !== 'zh-Hans';
 </script>
 
+<!-- eslint-disable svelte/no-navigation-without-resolve -- 站内链接经 localized()：先 resolve()，再加语言前缀 -->
+
 <Seo
-	title="下载"
+	title={m.dl_seo_title()}
 	description={downloadsOpen
-		? `下载青简输入法 macOS 版 ${latest.version}、Windows 内测版与 Linux 测试版（需要 macOS 13、64 位 Windows 11 或 Ubuntu 26.04），查看更新日志与全部版本。`
-		: `青简输入法 macOS 版 ${latest.version} 测试版即将开放下载（需要 macOS 13 或更新），先看看这一版有什么。Windows 与 Linux 版计划中。`}
+		? m.dl_seo_desc_open({ version: latest.version })
+		: m.dl_seo_desc_soon({ version: latest.version })}
 />
 
 <Subpage
-	title={downloadsOpen ? '下载青简。' : '快好了。'}
-	desc={downloadsOpen
-		? 'macOS、Windows 与 Linux 版都在测试阶段。'
-		: 'macOS 测试版作者自己每天在用，正在给少数测试者打包；等 Apple 开发者签名办下来就在这里公开下载。Windows 与 Linux 版在计划中。'}
+	title={downloadsOpen ? m.dl_title_open() : m.dl_title_soon()}
+	desc={downloadsOpen ? m.dl_desc_open() : m.dl_desc_soon()}
 >
 	<!-- 顶部：当前版本 + 主下载按钮 + 这一版的更新日志 -->
 	<section
@@ -128,8 +134,8 @@
 				<span class="text-[13px] text-muted">{heroPlatform.name}</span>
 			</div>
 			<p class="mt-2 text-[13px] text-muted">
-				{heroRelease.date} 发布{#if heroRelease.commit}
-					· 提交 <code class="text-[12px]">{shortCommit(heroRelease.commit)}</code>{/if}
+				{m.dl_released_on({ date: heroRelease.date })}{#if heroRelease.commit}
+					· {m.dl_commit()} <code class="text-[12px]">{shortCommit(heroRelease.commit)}</code>{/if}
 			</p>
 
 			<div class="mt-6 flex flex-col gap-3">
@@ -137,29 +143,30 @@
 					<span
 						class="inline-flex w-fit items-center gap-2 rounded-xl border border-dashed border-[#bcd98f] bg-[#f0f7f5] px-[18px] py-[10px] text-sm font-medium text-teal"
 					>
-						<ClockIcon size={17} /> 即将开放下载
+						<ClockIcon size={17} />
+						{m.dl_soon_badge()}
 					</span>
 					<p class="text-[12px] leading-[1.7] text-muted">
-						{heroPlatform.requirement}。开放后这里会出现按你系统给的下载按钮，测试版没有 Apple
-						开发者签名时首次打开要到「系统设置 → 隐私与安全性」点「仍要打开」。
+						{m.dl_soon_note({ requirement: heroPlatform.requirement() })}
 					</p>
 				{:else if heroHidden && detectedPlatform}
 					<span
 						class="inline-flex w-fit items-center gap-2 rounded-xl border border-dashed border-[#c9d3d0] bg-[#f4f6f5] px-[18px] py-[10px] text-sm font-medium text-[#6b7a76]"
 					>
 						<ClockIcon size={17} />
-						{detectedPlatform.name} 版计划中
+						{m.dl_planned_badge({ platform: detectedPlatform.name })}
 					</span>
 					<p class="text-[12px] leading-[1.7] text-muted">
-						你正在用 {detectedPlatform.name}，这个平台的版本还没有做。现在有 macOS 版与 Windows 版，
+						{m.dl_planned_note({ platform: detectedPlatform.name })}
 						<button class="text-teal hover:underline" onclick={() => (showMacAnyway = true)}
-							>替 Mac 下载</button
-						>。
+							>{m.dl_planned_mac()}</button
+						>{m.dl_planned_end()}
 					</p>
 				{:else if heroAsset}
 					<div class="flex flex-wrap items-center gap-2.5">
 						<Button href={heroAsset.url} download class="w-fit">
-							下载 {heroPlatform.name} 版（{heroAsset.arch}） <DownloadSimpleIcon size={18} />
+							{m.dl_button({ platform: heroPlatform.name, arch: heroAsset.arch })}
+							<DownloadSimpleIcon size={18} />
 						</Button>
 						<!-- GitHub 下载慢时的网盘，同一版本各平台共用一个地址 -->
 						{#each heroRelease.mirrors as mirror (mirror.url)}
@@ -170,29 +177,36 @@
 								rel="noopener"
 								class="w-fit"
 							>
-								{mirror.name}下载 <ArrowSquareOutIcon size={16} />
+								{m.dl_mirror({ name: mirror.name })}
+								<ArrowSquareOutIcon size={16} />
 							</Button>
 						{/each}
 					</div>
 					<p class="text-[12px] leading-[1.7] text-muted">
-						{heroPlatform.requirement}，{formatSize(
-							heroAsset.size
-						)}。{#each otherAssets as other (other.file)}
-							{other.arch} 芯片的 Mac 请下
+						{m.dl_hero_meta({
+							requirement: heroPlatform.requirement(),
+							size: formatSize(heroAsset.size)
+						})}
+						{#each otherAssets as other (other.file)}
+							{m.dl_other_arch_before({ arch: other.arch })}
 							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- 安装包是外部下载地址 -->
-							<a class="text-teal hover:underline" href={other.url} download>{other.arch} 版</a
-							>；{/each}文件名与 SHA-256 见
-						<a class="text-teal hover:underline" href="#releases">全部版本</a>。 {unsignedHints[
-							heroPlatform.id
-						]}
+							<a class="text-teal hover:underline" href={other.url} download
+								>{m.dl_other_arch_link({ arch: other.arch })}</a
+							>{m.dl_other_arch_after()}
+						{/each}
+						{m.dl_checksums_before()}
+						<a class="text-teal hover:underline" href="#releases">{m.dl_checksums_link()}</a
+						>{m.dl_checksums_after()}
+						{unsignedHints[heroPlatform.id]()}
 					</p>
 				{/if}
 				<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
 					<a
 						class="inline-flex w-fit items-center gap-1 text-[13px] text-teal hover:underline"
-						href={resolve('/docs/[...path]', { path: 'getting-started/install' })}
+						href={localized(resolve('/docs/[...path]', { path: 'getting-started/install' }))}
 					>
-						安装说明 <ArrowRightIcon size={14} />
+						{m.dl_install_guide()}
+						<ArrowRightIcon size={14} />
 					</a>
 					<!-- eslint-disable svelte/no-navigation-without-resolve -- 外部链接 -->
 					<a
@@ -201,7 +215,8 @@
 						target="_blank"
 						rel="noopener"
 					>
-						在 GitHub 上查看这一版 <ArrowSquareOutIcon size={14} />
+						{m.dl_view_on_github()}
+						<ArrowSquareOutIcon size={14} />
 					</a>
 					<!-- eslint-enable svelte/no-navigation-without-resolve -->
 				</div>
@@ -209,8 +224,13 @@
 		</div>
 
 		<div>
-			<h2 class="mb-3 text-[13px] font-semibold tracking-[1.5px] text-[#18324b]">这一版有什么</h2>
-			<ul class="flex flex-col gap-2">
+			<h2 class="mb-3 text-[13px] font-semibold tracking-[1.5px] text-[#18324b]">
+				{m.dl_whats_new()}
+			</h2>
+			{#if notesInChinese}
+				<p class="mb-2 text-[12px] text-muted">{m.dl_notes_chinese()}</p>
+			{/if}
+			<ul class="flex flex-col gap-2" lang="zh-Hans">
 				{#each heroNotes.notes as note (note)}
 					<li class="flex gap-2 text-[13px] leading-[1.65] text-muted">
 						<span class="mt-[9px] size-[5px] shrink-0 rounded-full bg-teal"></span>
@@ -227,10 +247,7 @@
 
 	<!-- 平台一览 -->
 	<section id="platforms" class="scroll-mt-3">
-		<SectionHeading
-			title="平台"
-			desc="核心引擎平台无关，每个平台只写一层接入系统输入法框架的壳。"
-		/>
+		<SectionHeading title={m.dl_platforms_title()} desc={m.dl_platforms_desc()} />
 		<div class="grid gap-2.5 desk:grid-cols-3 desk:gap-[13px]">
 			{#each platforms as platform (platform.id)}
 				{@const Icon = platform.icon}
@@ -241,7 +258,7 @@
 					<div>
 						<strong class="text-sm font-medium">{platform.name}</strong>
 						<small class="mt-[3px] block text-[11px] text-muted"
-							>{platform.available ? platform.requirement : platform.api}</small
+							>{platform.available ? platform.requirement() : platform.api}</small
 						>
 					</div>
 					<span
@@ -249,7 +266,11 @@
 							? 'bg-[#e3efcf] font-semibold text-[#336f33]'
 							: 'bg-[#f1f2f4] text-[#84909d]'}"
 					>
-						{platform.available ? (platform.id === 'windows' ? '内测版' : '测试版') : '计划中'}
+						{platform.available
+							? platform.id === 'windows'
+								? m.dl_status_alpha()
+								: m.dl_status_beta()
+							: m.dl_status_planned()}
 					</span>
 				</article>
 			{/each}
@@ -258,8 +279,8 @@
 
 	<!-- 全部版本：下载没开放时不列（全是「暂无」的表格没有信息量） -->
 	<section id="releases" class="scroll-mt-3" hidden={!downloadsOpen}>
-		<SectionHeading title="全部版本" desc="按发布日期从新到旧，同一个版本号的各平台合在一条里。" />
-		<div class="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="按平台筛选">
+		<SectionHeading title={m.dl_releases_title()} desc={m.dl_releases_desc()} />
+		<div class="mb-4 flex flex-wrap gap-2" role="tablist" aria-label={m.dl_tabs_label()}>
 			{#each tabs as item (item.id)}
 				<button
 					type="button"
@@ -281,7 +302,7 @@
 					<header class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
 						<h3 class="font-song text-[22px] font-bold">{group.version}</h3>
 						<span class="text-[12px] text-muted"
-							>{group.preview ? '未发布 · 本地预览' : group.date} · {channelLabel(
+							>{group.preview ? m.dl_unreleased() : group.date} · {channelLabel(
 								group.channel
 							)}</span
 						>
@@ -291,8 +312,12 @@
 						{#each releaseLines(group.builds) as { build, names } ((build.tag || build.version) + build.platform)}
 							<li class="flex flex-wrap items-center gap-x-2">
 								<strong class="font-medium text-ink">{names}</strong>
-								{#if build.commit}<span>· 提交 <code>{shortCommit(build.commit)}</code></span>{/if}
-								{#if build.builtAt}<span>· 构建于 {formatBuiltAt(build.builtAt)}</span>{/if}
+								{#if build.commit}<span
+										>· {m.dl_commit()} <code>{shortCommit(build.commit)}</code></span
+									>{/if}
+								{#if build.builtAt}<span
+										>· {m.dl_built_at({ time: formatBuiltAt(build.builtAt) })}</span
+									>{/if}
 								<span>·</span>
 								<!-- eslint-disable svelte/no-navigation-without-resolve -- 外部链接 -->
 								<a
@@ -309,7 +334,7 @@
 					</ul>
 					{#if group.mirrors.length > 0 && !group.preview}
 						<p class="mt-1 flex flex-wrap items-center gap-x-2 text-[12px] text-muted">
-							GitHub 下载慢可以用网盘：
+							{m.dl_mirrors_note()}
 							<!-- eslint-disable svelte/no-navigation-without-resolve -- 外部链接 -->
 							{#each group.mirrors as mirror (mirror.url)}
 								<a
@@ -324,10 +349,11 @@
 					{/if}
 
 					{#if group.builds.includes(heroRelease)}
-						<p class="mt-2 text-[12px] text-muted">当前版本，更新日志见页首。</p>
+						<p class="mt-2 text-[12px] text-muted">{m.dl_current_note()}</p>
 					{:else}
 						<ul
 							class="mt-3 grid gap-x-6 gap-y-1.5 text-[13px] leading-[1.65] text-muted desk:grid-cols-2"
+							lang="zh-Hans"
 						>
 							{#each groupNotes.notes as note (note)}
 								<li class="flex gap-2">
@@ -346,10 +372,10 @@
 						<table class="w-full min-w-[560px] text-left text-[13px]">
 							<thead class="bg-[#f0f7f2] text-[12px] text-[#4d6b62]">
 								<tr>
-									<th class="px-3 py-2 font-medium">平台</th>
-									<th class="px-3 py-2 font-medium">芯片</th>
-									<th class="px-3 py-2 font-medium">文件</th>
-									<th class="px-3 py-2 font-medium">大小</th>
+									<th class="px-3 py-2 font-medium">{m.dl_col_platform()}</th>
+									<th class="px-3 py-2 font-medium">{m.dl_col_chip()}</th>
+									<th class="px-3 py-2 font-medium">{m.dl_col_file()}</th>
+									<th class="px-3 py-2 font-medium">{m.dl_col_size()}</th>
 									<th class="px-3 py-2 font-medium"></th>
 								</tr>
 							</thead>
@@ -377,7 +403,8 @@
 												href={asset.url}
 												download
 											>
-												下载 <DownloadSimpleIcon size={15} />
+												{m.dl_download()}
+												<DownloadSimpleIcon size={15} />
 											</a>
 											<!-- eslint-enable svelte/no-navigation-without-resolve -->
 										</td>

@@ -5,12 +5,14 @@
 	import CaretRightIcon from 'phosphor-svelte/lib/CaretRightIcon';
 	import LeafIcon from 'phosphor-svelte/lib/LeafIcon';
 	import Seo from '$lib/components/Seo.svelte';
+	import { localized } from '$lib/i18n';
+	import { m } from '$lib/paraglide/messages';
 	import '$lib/docs/doc.css';
 
 	let { data } = $props();
 
 	/** 文档内的站内地址；首页是 /docs 本身 */
-	const href = (slug: string) => resolve('/docs/[...path]', { path: slug });
+	const href = (slug: string) => localized(resolve('/docs/[...path]', { path: slug }));
 
 	/** 侧栏分组默认全部展开；点箭头可以手动收起，换页时收起的状态保留 */
 	let manual = $state<Record<string, boolean>>({});
@@ -60,9 +62,11 @@
 	});
 </script>
 
+<!-- eslint-disable svelte/no-navigation-without-resolve -- 站内链接经 localized()：先 resolve()，再加语言前缀 -->
+
 <Seo
-	title={data.slug ? data.meta.title : '使用文档'}
-	description={data.meta.description || `青简输入法使用文档：${data.meta.title}。`}
+	title={data.slug ? data.meta.title : m.docs_title()}
+	description={data.meta.description || m.docs_seo_desc({ title: data.meta.title })}
 />
 
 <div class="wrap min-h-[65vh] py-[30px] pb-[45px] desk:py-[50px] desk:pb-20">
@@ -72,7 +76,7 @@
 	>
 		<!-- 左：文档目录树。sticky 且自己滚动，与正文互不牵连 -->
 		<nav
-			aria-label="文档目录"
+			aria-label={m.docs_nav_label()}
 			class="wide:sticky wide:top-[100px] wide:col-start-1 wide:row-start-1 wide:max-h-[calc(100vh-130px)] wide:self-start wide:overflow-y-auto wide:pr-2 wide:pb-6"
 		>
 			<a
@@ -80,7 +84,7 @@
 					? 'text-teal'
 					: 'text-ink hover:text-teal'}"
 				href={href('')}
-				aria-current={data.slug === '' ? 'page' : undefined}>使用文档</a
+				aria-current={data.slug === '' ? 'page' : undefined}>{m.docs_title()}</a
 			>
 			<ul class="flex flex-wrap gap-x-5 gap-y-2 text-[13px] wide:flex-col wide:gap-y-1">
 				{#each data.navigation as group (group.slug)}
@@ -90,7 +94,7 @@
 							<button
 								class="grid size-5 place-items-center rounded text-[#8a9a94] hover:text-teal"
 								aria-expanded={open}
-								aria-label="{open ? '收起' : '展开'}{group.title}"
+								aria-label="{open ? m.docs_collapse() : m.docs_expand()} {group.title}"
 								onclick={() => toggle(group.slug)}
 							>
 								<CaretRightIcon
@@ -135,7 +139,7 @@
 		</nav>
 
 		<!-- 中：正文。只画页名，不画上面的分组名（侧栏已经高亮） -->
-		<article class="min-w-0 wide:col-start-2 wide:row-start-1">
+		<article class="min-w-0 wide:col-start-2 wide:row-start-1" lang="zh-Hans">
 			<h1 class="mb-2 font-song text-[28px] leading-[1.4] font-bold desk:text-[32px]">
 				{data.meta.title}
 			</h1>
@@ -171,7 +175,7 @@
 			</div>
 
 			<!-- 上一页 / 下一页 -->
-			<nav aria-label="翻页" class="mt-6 grid gap-3 text-[13px] desk:grid-cols-2">
+			<nav aria-label={m.docs_pager_label()} class="mt-6 grid gap-3 text-[13px] desk:grid-cols-2">
 				{#if data.previous}
 					<a
 						class="flex items-center gap-2 rounded-lg border border-line bg-white/86 px-4 py-3 text-muted transition-colors hover:text-teal"
@@ -179,8 +183,8 @@
 					>
 						<ArrowLeftIcon size={15} />
 						<span
-							><span class="block text-[11px] text-[#9aa5b1]">上一页</span>{data.previous
-								.title}</span
+							><span class="block text-[11px] text-[#9aa5b1]">{m.docs_previous()}</span>{data
+								.previous.title}</span
 						>
 					</a>
 				{:else}
@@ -192,7 +196,8 @@
 						href={href(data.next.slug)}
 					>
 						<span
-							><span class="block text-[11px] text-[#9aa5b1]">下一页</span>{data.next.title}</span
+							><span class="block text-[11px] text-[#9aa5b1]">{m.docs_next()}</span>{data.next
+								.title}</span
 						>
 						<ArrowRightIcon size={15} />
 					</a>
@@ -203,11 +208,11 @@
 		<!-- 右：本页的二级标题，随滚动高亮；只在最宽一档出现 -->
 		{#if data.toc.length}
 			<nav
-				aria-label="本页目录"
+				aria-label={m.docs_toc_label()}
 				class="hidden max:sticky max:top-[100px] max:col-start-3 max:row-start-1 max:block max:self-start"
 			>
 				<span class="mb-3 block text-[11px] font-semibold tracking-[1.5px] text-[#4d6b62]"
-					>本页</span
+					>{m.docs_on_this_page()}</span
 				>
 				<ul class="flex flex-col gap-2 text-[12px]">
 					{#each data.toc as entry (entry.id)}

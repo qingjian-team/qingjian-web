@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '$lib/paraglide/messages';
 	import type { Contributor } from '$lib/releases';
 
 	type Props = {
@@ -16,7 +17,7 @@
 
 <!-- 更新日志里「本版社区贡献」那一行：一排头像，悬停显示用户名与贡献内容，点开 GitHub 用户页 -->
 <div class="flex flex-wrap items-center gap-2 {className}">
-	<span class="text-[12px] text-muted">社区贡献</span>
+	<span class="text-[12px] text-muted">{m.dl_contributors()}</span>
 	<ul class="flex flex-wrap items-center gap-1.5">
 		{#each contributors as { login, note } (login)}
 			<li>

@@ -4,25 +4,28 @@
 	import BambooGrove from '$lib/components/BambooGrove.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import Header from '$lib/components/Header.svelte';
+	import LanguageBanner from '$lib/components/LanguageBanner.svelte';
 	import Modal from '$lib/components/Modal.svelte';
+	import { ogLocales } from '$lib/i18n';
+	import { m } from '$lib/paraglide/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
 	import { latest } from '$lib/releases';
 	import { ui } from '$lib/ui.svelte';
 
 	let { children }: { children: Snippet } = $props();
 
-	/** 给搜索引擎的结构化数据：一个免费的 macOS 输入法应用 */
+	/** 给搜索引擎的结构化数据：一个免费的 macOS 输入法应用。换语言是整页重载，这里按当前语言算一次就够 */
 	const structuredData = {
 		'@context': 'https://schema.org',
 		'@type': 'SoftwareApplication',
 		name: '青简 Qingjian',
-		alternateName: '青简输入法',
+		alternateName: m.seo_brand(),
 		url: 'https://qingjian.app',
-		description:
-			'用 Rust 写的拼音输入法。候选词旁边多一条你正在学的外语的译词，打字时顺便多认识一个词。全部在本机完成，一次只学一种语言。',
+		description: m.site_description(),
 		applicationCategory: 'UtilitiesApplication',
 		operatingSystem: 'macOS 13+',
 		softwareVersion: latest.version,
-		inLanguage: 'zh-CN',
+		inLanguage: getLocale(),
 		offers: { '@type': 'Offer', price: '0', priceCurrency: 'CNY' },
 		author: { '@type': 'Person', name: 'yenharvey' }
 	};
@@ -43,12 +46,9 @@
 <svelte:head>
 	<!-- 站点级：站名、语言；每页的标题 / 描述 / 规范地址 / 分享卡片图在 Seo 组件里 -->
 	<meta property="og:site_name" content="青简 Qingjian" />
-	<meta property="og:locale" content="zh_CN" />
+	<meta property="og:locale" content={ogLocales[getLocale()]} />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta
-		name="keywords"
-		content="青简, Qingjian, 输入法, 拼音输入法, macOS 输入法, Rust 输入法, 学英语, 学日语, 双拼, 整句输入, 本地输入法"
-	/>
+	<meta name="keywords" content={m.site_keywords()} />
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- 结构化数据是自己拼的 JSON，不含用户输入 -->
 	{@html structuredDataTag}
 </svelte:head>
@@ -56,6 +56,7 @@
 <div class="relative isolate flex min-h-screen flex-col overflow-clip pt-[83px] desk:pt-[82px]">
 	<BambooGrove />
 	<Header />
+	<LanguageBanner />
 
 	<main class="relative z-1 flex-1">
 		{@render children()}

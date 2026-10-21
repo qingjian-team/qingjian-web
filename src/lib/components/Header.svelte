@@ -4,8 +4,11 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Brand from './Brand.svelte';
+	import LanguageMenu from './LanguageMenu.svelte';
 	import NavLink from './NavLink.svelte';
 	import { isCurrentPath, navLinks } from '$lib/data';
+	import { localized, plainPath } from '$lib/i18n';
+	import { m } from '$lib/paraglide/messages';
 
 	let menu = $state(false);
 
@@ -50,7 +53,7 @@
 	<div class="flex h-full items-center justify-between px-[15px] desk:px-[22px]">
 		<Brand />
 
-		<button class="desk:hidden" aria-label="打开导航" onclick={() => (menu = !menu)}>
+		<button class="desk:hidden" aria-label={m.nav_open_menu()} onclick={() => (menu = !menu)}>
 			<ListIcon size={25} />
 		</button>
 
@@ -61,12 +64,15 @@
 		>
 			{#each navLinks as link (link.path)}
 				<NavLink
-					href={resolve(link.path)}
-					label={link.label}
-					current={isCurrentPath(page.url.pathname, link.path)}
+					href={localized(resolve(link.path))}
+					label={link.label()}
+					current={isCurrentPath(plainPath(page.url), link.path)}
 					onclick={() => (menu = false)}
 				/>
 			{/each}
+			<div class="w-full desk:w-auto desk:border-l desk:border-line desk:pl-[22px]">
+				<LanguageMenu onpick={() => (menu = false)} />
+			</div>
 			<!-- 源码仓库：桌面端只画图标、用竖线与站内导航隔开，手机菜单里带文字 -->
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- 外部链接 -->
 			<a
@@ -74,7 +80,7 @@
 				href="https://github.com/qingjian-team/qingjian"
 				target="_blank"
 				rel="noopener"
-				aria-label="GitHub 仓库"
+				aria-label={m.nav_github_label()}
 				onclick={() => (menu = false)}
 			>
 				<GithubLogoIcon size={19} />

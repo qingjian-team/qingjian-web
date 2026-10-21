@@ -1,5 +1,6 @@
 <script lang="ts">
 	import CloudIcon from 'phosphor-svelte/lib/CloudIcon';
+	import { m } from '$lib/paraglide/messages';
 	import { ui } from '$lib/ui.svelte';
 
 	/** 逐键敲的字母；拼音行显示时由引擎自动补 `'` 切分 */
@@ -172,7 +173,8 @@
 <div
 	class="relative mx-auto h-[430px] w-full max-w-[440px] text-[#262626] desk:h-[450px]"
 	role="img"
-	aria-label="用青简打 qingjian 时的候选窗口演示"
+	aria-label={m.home_demo_label()}
+	lang="zh-Hans"
 >
 	<!-- 应用里的一行文字 -->
 	<div

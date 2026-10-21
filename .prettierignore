@@ -13,3 +13,7 @@ worker-configuration.d.ts
 
 # sync-docs 拉主仓库时生成
 src/content/upstream.json
+
+# Paraglide / inlang 自己生成的缓存，只有 settings.json 是手写的
+/project.inlang/*
+!/project.inlang/settings.json

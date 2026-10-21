@@ -1,6 +1,7 @@
 <script lang="ts">
 	import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
 	import XIcon from 'phosphor-svelte/lib/XIcon';
+	import { m } from '$lib/paraglide/messages';
 	import { ui } from '$lib/ui.svelte';
 	import Button from './Button.svelte';
 
@@ -9,8 +10,8 @@
 	const copy = $derived.by(() => {
 		const id = ui.modal;
 		if (id === 'Windows' || id === 'Linux')
-			return { title: `${id} 版正在规划中`, body: '更多平台支持正在路上，敬请期待。' };
-		return { title: '与青简保持连接', body: '社区链接尚未配置，敬请期待。' };
+			return { title: m.modal_platform_title({ platform: id }), body: m.modal_platform_body() };
+		return { title: m.modal_community_title(), body: m.modal_community_body() };
 	});
 
 	function focusables() {
@@ -77,7 +78,7 @@
 	>
 		<button
 			class="absolute top-4 right-4 grid size-8 place-items-center rounded-full bg-[#f0f7f5]"
-			aria-label="关闭"
+			aria-label={m.modal_close()}
 			onclick={() => (ui.modal = null)}
 		>
 			<XIcon size={22} />
@@ -86,6 +87,6 @@
 		<img class="mb-3.5 h-[50px] w-auto" src="/assets/logo.svg" alt="" />
 		<h2 id="modal-title" class="mb-3 font-song text-[26px] font-bold">{copy.title}</h2>
 		<p class="my-[10px] mb-4 text-sm leading-[1.55] text-muted">{copy.body}</p>
-		<Button onclick={() => (ui.modal = null)}>知道了 <CheckIcon size={17} /></Button>
+		<Button onclick={() => (ui.modal = null)}>{m.modal_ok()} <CheckIcon size={17} /></Button>
 	</div>
 </div>
