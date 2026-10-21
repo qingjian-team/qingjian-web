@@ -204,7 +204,7 @@
 			<p class="mt-4 text-[12px] text-muted">
 				安装与数据位置的说明见<a
 					class="text-teal underline"
-					href={resolve('/docs/[...path]', { path: 'help/data-and-logs' })}>文档</a
+					href={resolve('/docs/[...path]', { path: 'help/privacy' })}>文档</a
 				>。
 			</p>
 		</div>

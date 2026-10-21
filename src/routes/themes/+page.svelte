@@ -62,7 +62,7 @@
 		<p class="mb-4 text-[14px] leading-[1.75] text-muted">
 			主题是一个文件夹：theme.json、README 与几张截图。写法见<a
 				class="text-teal hover:underline"
-				href={resolve('/docs/[...path]', { path: 'settings/themes' })}>使用文档「主题」页</a
+				href={resolve('/docs/[...path]', { path: 'advanced/custom-themes' })}>使用文档「自制主题」页</a
 			>，可以照着内置的樱花主题改，写好后向主题仓库提 PR。
 		</p>
 		<a
