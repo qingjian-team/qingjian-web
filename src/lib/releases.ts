@@ -1,3 +1,4 @@
+import AndroidLogoIcon from 'phosphor-svelte/lib/AndroidLogoIcon';
 import AppleLogoIcon from 'phosphor-svelte/lib/AppleLogoIcon';
 import LinuxLogoIcon from 'phosphor-svelte/lib/LinuxLogoIcon';
 import WindowsLogoIcon from 'phosphor-svelte/lib/WindowsLogoIcon';
@@ -5,7 +6,7 @@ import type { PhosphorIcon, Text } from '$lib/data';
 import { m } from '$lib/paraglide/messages';
 import feed from '../content/releases.json';
 
-export type PlatformId = 'macos' | 'windows' | 'linux';
+export type PlatformId = 'macos' | 'windows' | 'linux' | 'android';
 
 /** 一个平台的静态信息；status 与主仓库 README「平台」一节一致 */
 export type Platform = {
@@ -42,6 +43,14 @@ export const platforms: Platform[] = [
 		icon: LinuxLogoIcon,
 		api: 'Fcitx5',
 		requirement: m.platform_req_linux,
+		available: true
+	},
+	{
+		id: 'android',
+		name: 'Android',
+		icon: AndroidLogoIcon,
+		api: 'InputMethodService',
+		requirement: m.platform_req_android,
 		available: true
 	}
 ];
@@ -215,7 +224,7 @@ export const releaseGroups: ReleaseGroup[] = (() => {
 
 /**
  * 本地预览的版本还没有构建，按平台筛选时靠更新日志本身判断它属于谁：
- * 条目全带「Windows：」/「macOS：」/「Linux：」前缀就只属于那些平台，有一条不带前缀就是各端共用。
+ * 条目全带「Windows：」/「macOS：」/「Linux：」/「Android：」前缀就只属于那些平台，有一条不带前缀就是各端共用。
  */
 export function previewPlatforms(notes: string[]): PlatformId[] {
 	const found = new Set<PlatformId>();
@@ -223,9 +232,10 @@ export function previewPlatforms(notes: string[]): PlatformId[] {
 		if (/^Windows[：:]/.test(note)) found.add('windows');
 		else if (/^macOS[：:]/.test(note)) found.add('macos');
 		else if (/^Linux[：:]/.test(note)) found.add('linux');
-		else if (!/^\*\*已知问题/.test(note)) return ['macos', 'windows', 'linux'];
+		else if (/^Android[：:]/.test(note)) found.add('android');
+		else if (!/^\*\*已知问题/.test(note)) return ['macos', 'windows', 'linux', 'android'];
 	}
-	return found.size > 0 ? [...found] : ['macos', 'windows', 'linux'];
+	return found.size > 0 ? [...found] : ['macos', 'windows', 'linux', 'android'];
 }
 
 /** 更新日志「本版社区贡献」行里的一个人：GitHub 用户名与贡献内容 */
@@ -297,7 +307,8 @@ export function latestFor(platform: PlatformId): Release | null {
 export const unsignedHints: Record<PlatformId, Text> = {
 	macos: m.unsigned_macos,
 	windows: m.unsigned_windows,
-	linux: m.unsigned_linux
+	linux: m.unsigned_linux,
+	android: m.unsigned_android
 };
 
 /**
@@ -353,7 +364,7 @@ function archOfFile(file: string): Arch | null {
 }
 
 function isPlatformId(value: string): value is PlatformId {
-	return value === 'macos' || value === 'windows' || value === 'linux';
+	return value === 'macos' || value === 'windows' || value === 'linux' || value === 'android';
 }
 
 function asChannel(value: string): Channel {
@@ -367,6 +378,8 @@ export function detectPlatform(): PlatformId | null {
 		(navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform ??
 		navigator.userAgent
 	).toLowerCase();
+	// Android 的 UA 里也有 Linux，先认它
+	if (hint.includes('android')) return 'android';
 	if (hint.includes('mac')) return 'macos';
 	if (hint.includes('win')) return 'windows';
 	if (hint.includes('linux') || hint.includes('x11')) return 'linux';

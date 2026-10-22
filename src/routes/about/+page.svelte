@@ -16,7 +16,8 @@
 			status: m.about_status_alpha,
 			ready: true
 		},
-		{ name: 'Linux', api: 'Fcitx5', status: m.about_status_beta, ready: true }
+		{ name: 'Linux', api: 'Fcitx5', status: m.about_status_beta, ready: true },
+		{ name: 'Android', api: 'InputMethodService', status: m.about_status_preview, ready: true }
 	];
 
 	/** 随包数据的来源与许可，与偏好设置「关于」页的清单一致 */
@@ -99,7 +100,7 @@
 	<!-- 平台 -->
 	<section id="platforms" class="scroll-mt-3">
 		<SectionHeading title={m.about_platforms_title()} desc={m.about_platforms_desc()} />
-		<div class="grid gap-3 desk:grid-cols-3">
+		<div class="grid gap-3 desk:grid-cols-4">
 			{#each platforms as platform (platform.name)}
 				<article class="rounded-lg border border-line bg-white/86 px-4 py-3">
 					<div class="flex items-center justify-between">

@@ -248,7 +248,7 @@
 	<!-- 平台一览 -->
 	<section id="platforms" class="scroll-mt-3">
 		<SectionHeading title={m.dl_platforms_title()} desc={m.dl_platforms_desc()} />
-		<div class="grid gap-2.5 desk:grid-cols-3 desk:gap-[13px]">
+		<div class="grid gap-2.5 desk:grid-cols-4 desk:gap-[13px]">
 			{#each platforms as platform (platform.id)}
 				{@const Icon = platform.icon}
 				<article
@@ -269,7 +269,9 @@
 						{platform.available
 							? platform.id === 'windows'
 								? m.dl_status_alpha()
-								: m.dl_status_beta()
+								: platform.id === 'android'
+									? m.dl_status_preview()
+									: m.dl_status_beta()
 							: m.dl_status_planned()}
 					</span>
 				</article>
