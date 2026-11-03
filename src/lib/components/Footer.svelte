@@ -4,6 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Brand from './Brand.svelte';
+	import GiteeIcon from './GiteeIcon.svelte';
 	import NavLink from './NavLink.svelte';
 	import { isCurrentPath, navLinks } from '$lib/data';
 	import { localized, plainPath } from '$lib/i18n';
@@ -17,7 +18,8 @@
 
 	/** 社区链接。X 账号还没开，先不列 */
 	const community = [
-		{ label: 'GitHub', icon: GithubLogoIcon, href: 'https://github.com/qingjian-team' }
+		{ label: 'GitHub', icon: GithubLogoIcon, href: 'https://github.com/qingjian-team' },
+		{ label: 'Gitee', icon: GiteeIcon, href: 'https://gitee.com/qingjian-team' }
 	];
 </script>
 

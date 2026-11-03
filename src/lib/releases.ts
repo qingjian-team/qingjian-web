@@ -107,6 +107,8 @@ export type Release = {
 	tag: string;
 	/** GitHub Release 页面，看原文说明、校验和与构建信息 */
 	pageUrl: string;
+	/** Gitee 上同名的发行版页面（只放安装包，不带更新日志） */
+	giteePageUrl: string;
 	/** 这条构建的平台：共用一个 GitHub Release 的多个平台在这里拆成各自一条，下游按平台取用不用区分新旧发布方式 */
 	platform: PlatformId | null;
 	/** 本地开发时从主仓库 CHANGELOG.md 合进来的未发布版本：没有安装包、日期为空，线上不会有 */
@@ -128,6 +130,9 @@ export type ReleaseGroup = {
 	/** 整组都是本地预览（见 Release.preview） */
 	preview: boolean;
 };
+
+/** Gitee 上的镜像仓库，与 GitHub 同名；发版时在同名标签下建发行版 */
+const GITEE_REPO = `https://gitee.com/${feed.repository}`;
 
 /**
  * 数据来自主仓库发版时生成的 releases.json（`scripts/sync-releases.mjs` 在构建前拉到 src/content/），
@@ -163,6 +168,7 @@ export const releases: Release[] = feed.releases
 			builtAt: release.built_at,
 			tag,
 			pageUrl: preview ? '' : `https://github.com/${feed.repository}/releases/tag/${tag}`,
+			giteePageUrl: preview ? '' : `${GITEE_REPO}/releases/tag/${tag}`,
 			preview
 		};
 		const present = platforms

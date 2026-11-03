@@ -218,6 +218,15 @@
 						{m.dl_view_on_github()}
 						<ArrowSquareOutIcon size={14} />
 					</a>
+					<a
+						class="inline-flex w-fit items-center gap-1 text-[13px] text-teal hover:underline"
+						href={heroRelease.giteePageUrl}
+						target="_blank"
+						rel="noopener"
+					>
+						{m.dl_view_on_gitee()}
+						<ArrowSquareOutIcon size={14} />
+					</a>
 					<!-- eslint-enable svelte/no-navigation-without-resolve -->
 				</div>
 			</div>
@@ -309,7 +318,7 @@
 							)}</span
 						>
 					</header>
-					<!-- 每个平台一行：提交、构建时间、GitHub Release；同版本号多平台时叠着列。本地预览的版本还没有构建 -->
+					<!-- 每个平台一行：提交、构建时间、GitHub Release 与 Gitee 发行版；同版本号多平台时叠着列。本地预览的版本还没有构建 -->
 					<ul class="mt-1 flex flex-col gap-0.5 text-[12px] text-muted" hidden={group.preview}>
 						{#each releaseLines(group.builds) as { build, names } ((build.tag || build.version) + build.platform)}
 							<li class="flex flex-wrap items-center gap-x-2">
@@ -329,6 +338,14 @@
 									rel="noopener"
 								>
 									GitHub Release <ArrowSquareOutIcon size={13} />
+								</a>
+								<a
+									class="inline-flex items-center gap-1 text-teal hover:underline"
+									href={build.giteePageUrl}
+									target="_blank"
+									rel="noopener"
+								>
+									Gitee <ArrowSquareOutIcon size={13} />
 								</a>
 								<!-- eslint-enable svelte/no-navigation-without-resolve -->
 							</li>
