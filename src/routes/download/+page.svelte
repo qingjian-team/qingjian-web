@@ -32,6 +32,7 @@
 		splitContributors,
 		unsignedHints,
 		type Arch,
+		type Platform,
 		type PlatformId,
 		type Release,
 		type ReleaseGroup
@@ -66,6 +67,19 @@
 		heroAssets.find((a) => a.cpu === (arch ?? 'arm64')) ?? heroAssets[0] ?? null
 	);
 	const otherAssets = $derived(heroAssets.filter((a) => a !== heroAsset));
+	/** Linux 最新一版有 AppImage 时，系统要求与安装提示按 AppImage 写；只有 tar.gz 的旧版本照旧 */
+	const linuxAppImage = $derived(
+		latestFor('linux')?.assets.some((a) => a.file.endsWith('.AppImage')) ?? false
+	);
+	const requirementOf = (platform: Platform) =>
+		platform.id === 'linux' && linuxAppImage
+			? m.platform_req_linux_appimage()
+			: platform.requirement();
+	const heroIsAppImage = $derived(heroAsset?.file.endsWith('.AppImage') ?? false);
+	const heroRequirement = $derived(requirementOf(heroPlatform));
+	const heroHint = $derived(
+		heroIsAppImage ? m.unsigned_linux_appimage() : unsignedHints[heroPlatform.id]()
+	);
 	/** 页首的更新日志：贡献者那一行摘出来画成头像 */
 	const heroNotes = $derived(splitContributors(heroRelease.notes));
 
@@ -184,20 +198,29 @@
 					</div>
 					<p class="text-[12px] leading-[1.7] text-muted">
 						{m.dl_hero_meta({
-							requirement: heroPlatform.requirement(),
+							requirement: heroRequirement,
 							size: formatSize(heroAsset.size)
 						})}
 						{#each otherAssets as other (other.file)}
-							{m.dl_other_arch_before({ arch: other.arch })}
-							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- 安装包是外部下载地址 -->
-							<a class="text-teal hover:underline" href={other.url} download
-								>{m.dl_other_arch_link({ arch: other.arch })}</a
-							>{m.dl_other_arch_after()}
+							<!-- Mac 的另一个包是另一种芯片，Linux 的是另一种格式 -->
+							{#if heroPlatform.id === 'linux'}
+								{m.dl_other_format_before()}
+								<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- 安装包是外部下载地址 -->
+								<a class="text-teal hover:underline" href={other.url} download
+									>{m.dl_other_format_link({ arch: other.arch })}</a
+								>{m.dl_other_arch_after()}
+							{:else}
+								{m.dl_other_arch_before({ arch: other.arch })}
+								<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- 安装包是外部下载地址 -->
+								<a class="text-teal hover:underline" href={other.url} download
+									>{m.dl_other_arch_link({ arch: other.arch })}</a
+								>{m.dl_other_arch_after()}
+							{/if}
 						{/each}
 						{m.dl_checksums_before()}
 						<a class="text-teal hover:underline" href="#releases">{m.dl_checksums_link()}</a
 						>{m.dl_checksums_after()}
-						{unsignedHints[heroPlatform.id]()}
+						{heroHint}
 					</p>
 				{/if}
 				<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -267,7 +290,7 @@
 					<div>
 						<strong class="text-sm font-medium">{platform.name}</strong>
 						<small class="mt-[3px] block text-[11px] text-muted"
-							>{platform.available ? platform.requirement() : platform.api}</small
+							>{platform.available ? requirementOf(platform) : platform.api}</small
 						>
 					</div>
 					<span
