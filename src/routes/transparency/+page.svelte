@@ -15,7 +15,7 @@
 
 <Seo
 	title="公开说明"
-	description="青简涉及的争议，我的说明与完整记录。"
+	description="青简涉及的争议，以及我的说明。"
 	translations={[baseLocale]}
 	contentLocale={baseLocale}
 />
@@ -28,9 +28,7 @@
 		>
 			公开说明
 		</h1>
-		<p class="mb-8 text-base leading-[1.7] text-[#3d3d3d]">
-			青简涉及的争议，我的说明与按时间整理的完整记录。
-		</p>
+		<p class="mb-8 text-base leading-[1.7] text-[#3d3d3d]">青简涉及的争议，以及我的说明。</p>
 		<ul class="flex flex-col gap-4">
 			{#each data.entries as entry (entry.slug)}
 				<li class="rounded-xl border border-[#e4e4e0] bg-white p-5">
