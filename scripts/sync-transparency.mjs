@@ -1,10 +1,11 @@
 // 公开说明页（/transparency）的内容：构建时从私有仓库拉取，本仓库不存任何正文、图片或事件名称。
 // 一个私有仓库一件事；拉不到任何一件就没有这一页，页脚也不出现入口。
-// 要撤下某一件：从构建环境的仓库列表里去掉它（或删掉私有仓库），再构建一次。
+// 要撤下某一件：从构建环境的仓库列表里去掉它（或删掉私有仓库、撤销令牌），再构建一次；拉不到的会被跳过，不会让构建失败。
 //
 // 来源（二选一，都没有就不生成）：
 //   QINGJIAN_TRANSPARENCY_SOURCES  本地目录，逗号分隔，本地预览用，例如 ../某个私有仓库的目录
-//   QINGJIAN_TRANSPARENCY_REPOS    GitHub 仓库 owner/name，逗号分隔，配合 QINGJIAN_TRANSPARENCY_TOKEN（这些仓库的只读令牌）
+//   QINGJIAN_TRANSPARENCY_REPOS    GitHub 仓库 owner/name，逗号分隔，配合 QINGJIAN_TRANSPARENCY_TOKEN
+//                                  （fine-grained 令牌，只给这些仓库的 Contents 只读）；经 GitHub API 只下载需要的文件
 //
 // 每个私有仓库根下要有 transparency.json：
 //   {
@@ -31,7 +32,6 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -50,30 +50,64 @@ function list(value) {
 		.filter(Boolean);
 }
 
-/** 先只取 transparency.json，再按它列的文件补齐，私有仓库里别的东西不落地 */
-function cloneRepo(name, token) {
-	const tmp = mkdtempSync(join(tmpdir(), 'qingjian-transparency-'));
-	const repoDir = join(tmp, 'repo');
-	// 令牌塞进 URL 只在这个子进程里出现，日志里只打印仓库名
-	const url = `https://x-access-token:${token}@github.com/${name}.git`;
-	const git = (args, cwd = tmp) =>
-		execFileSync('git', args, { cwd, stdio: ['ignore', 'ignore', 'inherit'] });
-	log(`从 git 拉取 ${name}`);
-	git(['clone', '--quiet', '--depth', '1', '--filter=blob:none', '--sparse', url, 'repo']);
-	git(['sparse-checkout', 'set', '--no-cone', MANIFEST], repoDir);
-	const manifest = readManifest(repoDir);
-	git(
-		[
-			'sparse-checkout',
-			'set',
-			'--no-cone',
-			MANIFEST,
-			...manifest.docs.map((doc) => doc.file),
-			`${manifest.assets}/`
-		],
-		repoDir
+/** 用 GitHub API 取一个文件的原始内容；出错只报状态码，不带令牌 */
+async function githubRaw(name, token, path) {
+	const response = await fetch(
+		`https://api.github.com/repos/${name}/contents/${path.split('/').map(encodeURIComponent).join('/')}`,
+		{
+			headers: {
+				Accept: 'application/vnd.github.raw+json',
+				Authorization: `Bearer ${token}`,
+				'User-Agent': 'qingjian-web-build',
+				'X-GitHub-Api-Version': '2022-11-28'
+			}
+		}
 	);
-	return { path: repoDir, cleanup: () => rmSync(tmp, { recursive: true, force: true }) };
+	if (!response.ok) throw new Error(`${path}：HTTP ${response.status}`);
+	return Buffer.from(await response.arrayBuffer());
+}
+
+/** 先取 transparency.json，再按它列的文档和图片目录逐个下载；私有仓库里别的东西不落地 */
+async function fetchRepo(name, token) {
+	log(`从 GitHub 拉取 ${name}`);
+	const tmp = mkdtempSync(join(tmpdir(), 'qingjian-transparency-'));
+	const cleanup = () => rmSync(tmp, { recursive: true, force: true });
+	try {
+		const save = async (path) => {
+			const target = join(tmp, path);
+			mkdirSync(dirname(target), { recursive: true });
+			writeFileSync(target, await githubRaw(name, token, path));
+		};
+		await save(MANIFEST);
+		const manifest = readManifest(tmp);
+		const tree = await githubJson(name, token, 'git/trees/HEAD?recursive=1');
+		const prefix = `${manifest.assets}/`;
+		const assets = tree.tree
+			.filter((item) => item.type === 'blob' && item.path.startsWith(prefix))
+			.map((item) => item.path);
+		const files = [...manifest.docs.map((doc) => doc.file), ...assets];
+		// 并发几个一起下，图片上百张时也不慢
+		for (let i = 0; i < files.length; i += 8) {
+			await Promise.all(files.slice(i, i + 8).map(save));
+		}
+		return { path: tmp, cleanup };
+	} catch (error) {
+		cleanup();
+		throw error;
+	}
+}
+
+async function githubJson(name, token, path) {
+	const response = await fetch(`https://api.github.com/repos/${name}/${path}`, {
+		headers: {
+			Accept: 'application/vnd.github+json',
+			Authorization: `Bearer ${token}`,
+			'User-Agent': 'qingjian-web-build',
+			'X-GitHub-Api-Version': '2022-11-28'
+		}
+	});
+	if (!response.ok) throw new Error(`${path}：HTTP ${response.status}`);
+	return response.json();
 }
 
 function readManifest(dir) {
@@ -142,7 +176,14 @@ if (repos.length) {
 	const token = process.env.QINGJIAN_TRANSPARENCY_TOKEN;
 	if (!token)
 		throw new Error('设了 QINGJIAN_TRANSPARENCY_REPOS 但没有 QINGJIAN_TRANSPARENCY_TOKEN');
-	for (const name of repos) sources.push(cloneRepo(name, token));
+	for (const name of repos) {
+		// 拉不到（令牌过期或被撤销、仓库删了）只跳过这一件，不让整站构建失败
+		try {
+			sources.push(await fetchRepo(name, token));
+		} catch (error) {
+			log(`拉取 ${name} 失败，跳过（${error instanceof Error ? error.message : '未知错误'}）`);
+		}
+	}
 }
 
 const entries = [];
