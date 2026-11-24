@@ -12,6 +12,9 @@ node_modules
 /src/content/themes.json
 /src/content/themes
 /static/themes-assets
+# 公开说明页的同步产物（scripts/sync-transparency.mjs），内容只在私有仓库
+/src/content/transparency
+/static/transparency-assets
 .output
 .vercel
 .netlify

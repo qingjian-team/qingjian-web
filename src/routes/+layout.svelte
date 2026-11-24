@@ -6,13 +6,17 @@
 	import Header from '$lib/components/Header.svelte';
 	import LanguageBanner from '$lib/components/LanguageBanner.svelte';
 	import Modal from '$lib/components/Modal.svelte';
-	import { ogLocales } from '$lib/i18n';
+	import { page } from '$app/state';
+	import { ogLocales, plainPath } from '$lib/i18n';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import { latest } from '$lib/releases';
 	import { ui } from '$lib/ui.svelte';
 
 	let { children }: { children: Snippet } = $props();
+
+	/** 公开说明页是争议的说明与记录：去掉摆动的竹影，换成素净的底色 */
+	const plain = $derived(plainPath(page.url).startsWith('/transparency'));
 
 	/** 给搜索引擎的结构化数据：一个免费的 macOS 输入法应用。换语言是整页重载，这里按当前语言算一次就够 */
 	const structuredData = {
@@ -53,8 +57,14 @@
 	{@html structuredDataTag}
 </svelte:head>
 
-<div class="relative isolate flex min-h-screen flex-col overflow-clip pt-[83px] desk:pt-[82px]">
-	<BambooGrove />
+<div
+	class="relative isolate flex min-h-screen flex-col overflow-clip pt-[83px] desk:pt-[82px] {plain
+		? 'bg-[#f4f4f2]'
+		: ''}"
+>
+	{#if !plain}
+		<BambooGrove />
+	{/if}
 	<Header />
 	<LanguageBanner />
 

@@ -10,6 +10,7 @@ import TextAaIcon from 'phosphor-svelte/lib/TextAaIcon';
 import TranslateIcon from 'phosphor-svelte/lib/TranslateIcon';
 import UserIcon from 'phosphor-svelte/lib/UserIcon';
 import { m } from '$lib/paraglide/messages';
+import { transparencyEntries } from '$lib/transparency';
 
 /** phosphor-svelte 图标组件类型，从任一图标推导 */
 export type PhosphorIcon = typeof LeafIcon;
@@ -30,7 +31,11 @@ export const navLinks = [
 	{ label: m.nav_themes, path: '/themes' },
 	{ label: m.nav_download, path: '/download' },
 	{ label: m.nav_privacy, path: '/privacy' },
-	{ label: m.nav_about, path: '/about' }
+	{ label: m.nav_about, path: '/about' },
+	// 公开说明页只在构建时从私有仓库拉到内容才有，没有就不出现在导航里
+	...(transparencyEntries.length
+		? [{ label: m.nav_transparency, path: '/transparency' } as const]
+		: [])
 ] as const;
 
 /** 导航项是否对应当前页：首页只认根路径，其他项连同它下面的子页（/docs/xxx 也算在「文档」里）；pathname 是去掉语言前缀的 */
